@@ -1,0 +1,280 @@
+{
+  "name": "Google Drive Ops Folder Builder & Automation System",
+  "description": "Creates and maintains your complete agency operations folder structure",
+  "version": "1.0",
+  "modules": [
+    {
+      "id": 1,
+      "type": "webhook",
+      "name": "Trigger Folder Creation",
+      "webhook_url": "YOUR_WEBHOOK_URL",
+      "data_structure": {
+        "action": "string",
+        "target": "string",
+        "client_name": "string",
+        "agent_type": "string"
+      }
+    },
+    {
+      "id": 2,
+      "type": "router",
+      "name": "Route by Action Type",
+      "routes": [
+        {
+          "label": "Initial Setup",
+          "condition": "{{1.action}} = 'initial_setup'",
+          "modules": [3, 4, 5, 6, 7]
+        },
+        {
+          "label": "New Client",
+          "condition": "{{1.action}} = 'new_client'",
+          "modules": [8]
+        },
+        {
+          "label": "New Agent",
+          "condition": "{{1.action}} = 'new_agent'",
+          "modules": [9]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "google_drive",
+      "name": "Create Main Ops Folder",
+      "action": "create_folder",
+      "parent_id": "root",
+      "folder_name": "01_Sidekick_Marketer_Ops_V2",
+      "output": "main_folder_id"
+    },
+    {
+      "id": 4,
+      "type": "google_drive",
+      "name": "Create Folder Structure",
+      "action": "batch_create_folders",
+      "parent_id": "{{3.main_folder_id}}",
+      "folders": [
+        {
+          "name": "00_Master_Control",
+          "subfolders": []
+        },
+        {
+          "name": "01_Expert_Council_System",
+          "subfolders": [
+            "Framework",
+            "Expert_Profiles",
+            "Context_Analyzers",
+            "Selection_Templates"
+          ]
+        },
+        {
+          "name": "02_Task_Library",
+          "subfolders": [
+            "665_Tasks_Master",
+            "Task_to_Expert_Mapping",
+            "Service_Tiers_S0-S15",
+            "Task_Execution_SOPs"
+          ]
+        },
+        {
+          "name": "03_Agent_Library",
+          "subfolders": [
+            "Foundation_Agents",
+            "Discovery_Agents",
+            "Execution_Agents",
+            "Auto_Generated_Agents",
+            "Agent_Templates"
+          ]
+        },
+        {
+          "name": "04_Automation_Hub",
+          "subfolders": [
+            "Make_Scenarios",
+            "Parsio_Templates",
+            "Data_Pipelines",
+            "API_Connections"
+          ]
+        },
+        {
+          "name": "05_Client_Operations",
+          "subfolders": [
+            "Active_Clients",
+            "Client_Templates",
+            "Onboarding_Queue"
+          ]
+        },
+        {
+          "name": "06_Analytics_Command",
+          "subfolders": [
+            "Julius_AI_Analyses",
+            "Obviously_AI_Models",
+            "AgencyAnalytics_Dashboards",
+            "Reporting_Templates"
+          ]
+        },
+        {
+          "name": "07_Intelligence_System",
+          "subfolders": [
+            "Pattern_Library",
+            "Learning_Database",
+            "Trigger_Configurations",
+            "Evolution_Logs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "google_docs",
+      "name": "Add Framework Documents",
+      "action": "batch_create_documents",
+      "documents": [
+        {
+          "title": "Expert Council Framework",
+          "folder_id": "{{4.00_Master_Control}}",
+          "content": "# Expert Council Framework v1.0\n\n[Content from expert-council-framework-final.md]"
+        },
+        {
+          "title": "Agency Orchestration System",
+          "folder_id": "{{4.00_Master_Control}}",
+          "content": "# Complete Agency Orchestration System\n\n[Content from complete-agency-orchestration.md]"
+        },
+        {
+          "title": "Intelligence Layer Blueprint",
+          "folder_id": "{{4.00_Master_Control}}",
+          "content": "# Agent Intelligence Layer Blueprint\n\n[Content from agent-intelligence-layer-blueprint.md]"
+        },
+        {
+          "title": "Quick Start Guide",
+          "folder_id": "{{4.00_Master_Control}}",
+          "content": "# Quick Start Guide\n\n## Day 1: Setup\n1. Review all frameworks\n2. Pick first client\n3. Run Master Discovery\n\n## Day 2: Deploy\n1. Create Expert Council\n2. Map tasks\n3. Launch agents\n\n## Day 3: Monitor\n1. Check agent performance\n2. Review patterns\n3. Optimize"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "google_sheets",
+      "name": "Create Tracking Spreadsheets",
+      "action": "batch_create_sheets",
+      "sheets": [
+        {
+          "title": "Agent Registry",
+          "folder_id": "{{4.03_Agent_Library}}",
+          "headers": [
+            "Agent ID",
+            "Agent Name",
+            "Created Date",
+            "Created By",
+            "Status",
+            "Executions",
+            "Value Generated",
+            "Parent Agent",
+            "Child Agents"
+          ]
+        },
+        {
+          "title": "Pattern Library",
+          "folder_id": "{{4.07_Intelligence_System}}",
+          "headers": [
+            "Pattern ID",
+            "Pattern Type",
+            "First Seen",
+            "Times Encountered",
+            "Agent Created",
+            "Success Rate",
+            "Reusable"
+          ]
+        },
+        {
+          "title": "Client Tracker",
+          "folder_id": "{{4.05_Client_Operations}}",
+          "headers": [
+            "Client Name",
+            "Start Date",
+            "Expert Council",
+            "Active Agents",
+            "Tasks Completed",
+            "Monthly Value",
+            "Health Score"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "notion",
+      "name": "Create Notion Databases",
+      "action": "create_databases",
+      "databases": [
+        {
+          "name": "Agent Registry",
+          "properties": {
+            "Agent_ID": "title",
+            "Status": "select",
+            "Created_By": "select",
+            "Times_Used": "number",
+            "Value_Generated": "currency"
+          }
+        },
+        {
+          "name": "Pattern Library",
+          "properties": {
+            "Pattern_ID": "title",
+            "Pattern_Type": "select",
+            "Trigger_Count": "number",
+            "Solution": "relation"
+          }
+        },
+        {
+          "name": "Task Queue",
+          "properties": {
+            "Task_Name": "title",
+            "Client": "select",
+            "Service_Tier": "select",
+            "Status": "status",
+            "Owner": "person"
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "google_drive",
+      "name": "Create New Client Folder",
+      "action": "create_client_structure",
+      "parent_folder": "{{4.05_Client_Operations}}/Active_Clients",
+      "client_name": "{{1.client_name}}",
+      "structure": [
+        "01_Discovery",
+        "02_Expert_Council",
+        "03_Active_Tasks",
+        "04_Agents_Running",
+        "05_Performance_Data",
+        "06_Reports",
+        "07_Meeting_Notes"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "google_drive",
+      "name": "Create New Agent Folder",
+      "action": "create_agent_workspace",
+      "parent_folder": "{{4.03_Agent_Library}}/Auto_Generated_Agents",
+      "agent_name": "{{1.agent_type}}",
+      "files_to_create": [
+        "agent_code.py",
+        "execution_log.txt",
+        "pattern_discovered.json",
+        "performance_metrics.csv"
+      ]
+    }
+  ],
+  "settings": {
+    "error_handling": "continue",
+    "data_storage": "30_days",
+    "scheduling": "on_demand",
+    "notifications": {
+      "on_success": "slack",
+      "on_error": "email"
+    }
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "database_name": "📝 Discovery Notes",
+  "description": "Detailed notes and insights from discovery calls",
+  "properties": {
+    "Meeting Title": {
+      "type": "title",
+      "title": {}
+    },
+    "Client": {
+      "type": "relation",
+      "relation": {
+        "database_id": "CLIENT_MASTER_ID",
+        "synced_property_name": "Discovery Notes"
+      }
+    },
+    "Call Date": {
+      "type": "date",
+      "date": {}
+    },
+    "Attendees": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Duration (minutes)": {
+      "type": "number",
+      "number": {
+        "format": "number"
+      }
+    },
+    "Current Situation": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Problems Identified": {
+      "type": "multi_select",
+      "multi_select": {
+        "options": [
+          {"name": "Low Lead Volume", "color": "red"},
+          {"name": "Poor Lead Quality", "color": "orange"},
+          {"name": "Low Conversion Rate", "color": "yellow"},
+          {"name": "No Brand Recognition", "color": "purple"},
+          {"name": "Losing to Competitors", "color": "blue"},
+          {"name": "No Marketing System", "color": "gray"},
+          {"name": "Inconsistent Revenue", "color": "green"},
+          {"name": "Can't Scale", "color": "pink"},
+          {"name": "High Customer Churn", "color": "brown"},
+          {"name": "Price Shopping", "color": "default"}
+        ]
+      }
+    },
+    "Goals Stated": {
+      "type": "multi_select",
+      "multi_select": {
+        "options": [
+          {"name": "Double Revenue", "color": "green"},
+          {"name": "Dominate Market", "color": "red"},
+          {"name": "Consistent Leads", "color": "blue"},
+          {"name": "Premium Positioning", "color": "purple"},
+          {"name": "Scale Team", "color": "orange"},
+          {"name": "Exit Strategy", "color": "gray"},
+          {"name": "Passive Income", "color": "pink"}
+        ]
+      }
+    },
+    "Budget Mentioned": {
+      "type": "number",
+      "number": {
+        "format": "dollar"
+      }
+    },
+    "Timeline": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "Immediate", "color": "red"},
+          {"name": "This Quarter", "color": "orange"},
+          {"name": "Next Quarter", "color": "yellow"},
+          {"name": "This Year", "color": "blue"},
+          {"name": "Exploring", "color": "gray"}
+        ]
+      }
+    },
+    "Decision Process": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Hidden Problems Found": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Opportunities Identified": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Recommended Approach": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Next Steps": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Urgency Level": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "High", "color": "red"},
+          {"name": "Medium", "color": "yellow"},
+          {"name": "Low", "color": "green"}
+        ]
+      }
+    },
+    "Synthesis Complete": {
+      "type": "checkbox",
+      "checkbox": {}
+    },
+    "Google Doc Link": {
+      "type": "url",
+      "url": {}
+    },
+    "Recording Link": {
+      "type": "url",
+      "url": {}
+    }
+  },
+  "views": [
+    {
+      "name": "This Week",
+      "type": "calendar",
+      "calendar_by": "Call Date"
+    },
+    {
+      "name": "Needs Synthesis",
+      "type": "table",
+      "filter": {"property": "Synthesis Complete", "checkbox": {"equals": false}}
+    },
+    {
+      "name": "By Client",
+      "type": "table",
+      "group_by": "Client"
+    },
+    {
+      "name": "High Urgency",
+      "type": "table",
+      "filter": {"property": "Urgency Level", "select": {"equals": "High"}}
+    }
+  ]
+}

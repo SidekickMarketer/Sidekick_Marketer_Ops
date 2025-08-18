@@ -1,0 +1,224 @@
+{
+  "database_name": "🏢 Client Master",
+  "description": "Central database for all client information and intelligence",
+  "properties": {
+    "Company Name": {
+      "type": "title",
+      "title": {}
+    },
+    "Contact Name": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Email": {
+      "type": "email",
+      "email": {}
+    },
+    "Phone": {
+      "type": "phone_number",
+      "phone_number": {}
+    },
+    "Website": {
+      "type": "url",
+      "url": {}
+    },
+    "Stage": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "Lead", "color": "gray"},
+          {"name": "Discovery", "color": "blue"},
+          {"name": "Proposal", "color": "yellow"},
+          {"name": "Negotiation", "color": "orange"},
+          {"name": "Client", "color": "green"},
+          {"name": "Churned", "color": "red"}
+        ]
+      }
+    },
+    "Package": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "Growth", "color": "blue"},
+          {"name": "Leader", "color": "purple"},
+          {"name": "Domination", "color": "red"},
+          {"name": "Custom", "color": "gray"}
+        ]
+      }
+    },
+    "Monthly Investment": {
+      "type": "number",
+      "number": {
+        "format": "dollar"
+      }
+    },
+    "Health Score": {
+      "type": "number",
+      "number": {
+        "format": "number"
+      }
+    },
+    "Last Contact": {
+      "type": "date",
+      "date": {}
+    },
+    "Next Action": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Google Drive Folder": {
+      "type": "url",
+      "url": {}
+    },
+    "VA Owner": {
+      "type": "people",
+      "people": {}
+    },
+    "Industry": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "Landscaping", "color": "green"},
+          {"name": "Plumbing", "color": "blue"},
+          {"name": "HVAC", "color": "orange"},
+          {"name": "Roofing", "color": "brown"},
+          {"name": "Electrical", "color": "yellow"},
+          {"name": "Construction", "color": "gray"},
+          {"name": "SaaS", "color": "purple"},
+          {"name": "eCommerce", "color": "pink"},
+          {"name": "Professional Services", "color": "default"}
+        ]
+      }
+    },
+    "Revenue Range": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "<$1M", "color": "gray"},
+          {"name": "$1-5M", "color": "blue"},
+          {"name": "$5-10M", "color": "purple"},
+          {"name": "$10M+", "color": "green"}
+        ]
+      }
+    },
+    "Employee Count": {
+      "type": "number",
+      "number": {
+        "format": "number"
+      }
+    },
+    "Lead Source": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "Referral", "color": "green"},
+          {"name": "Cold Outreach", "color": "blue"},
+          {"name": "Inbound", "color": "purple"},
+          {"name": "Event", "color": "orange"},
+          {"name": "Partner", "color": "pink"}
+        ]
+      }
+    },
+    "Contract Length": {
+      "type": "number",
+      "number": {
+        "format": "number"
+      }
+    },
+    "Start Date": {
+      "type": "date",
+      "date": {}
+    },
+    "Lifetime Value": {
+      "type": "number",
+      "number": {
+        "format": "dollar"
+      }
+    },
+    "Main Competitors": {
+      "type": "multi_select",
+      "multi_select": {
+        "options": []
+      }
+    },
+    "Current Marketing Spend": {
+      "type": "number",
+      "number": {
+        "format": "dollar"
+      }
+    },
+    "Biggest Pain Points": {
+      "type": "multi_select",
+      "multi_select": {
+        "options": [
+          {"name": "Lead Generation", "color": "red"},
+          {"name": "Brand Awareness", "color": "blue"},
+          {"name": "Conversion Rate", "color": "orange"},
+          {"name": "Customer Retention", "color": "green"},
+          {"name": "Competition", "color": "purple"},
+          {"name": "Pricing Pressure", "color": "yellow"},
+          {"name": "Operational Efficiency", "color": "gray"}
+        ]
+      }
+    },
+    "Goals": {
+      "type": "multi_select",
+      "multi_select": {
+        "options": [
+          {"name": "Increase Revenue", "color": "green"},
+          {"name": "Market Domination", "color": "red"},
+          {"name": "Improve Margins", "color": "blue"},
+          {"name": "Scale Operations", "color": "purple"},
+          {"name": "Beat Competition", "color": "orange"},
+          {"name": "Digital Transformation", "color": "pink"}
+        ]
+      }
+    },
+    "Decision Makers": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Portal Link": {
+      "type": "url",
+      "url": {}
+    },
+    "Agents Deployed": {
+      "type": "multi_select",
+      "multi_select": {
+        "options": []
+      }
+    },
+    "Patterns Identified": {
+      "type": "rich_text",
+      "rich_text": {}
+    }
+  },
+  "views": [
+    {
+      "name": "Pipeline View",
+      "type": "board",
+      "group_by": "Stage",
+      "sort": [{"property": "Last Contact", "direction": "descending"}]
+    },
+    {
+      "name": "Active Clients",
+      "type": "table",
+      "filter": {"property": "Stage", "select": {"equals": "Client"}}
+    },
+    {
+      "name": "Needs Attention",
+      "type": "table",
+      "filter": {
+        "or": [
+          {"property": "Health Score", "number": {"less_than": 7}},
+          {"property": "Last Contact", "date": {"before": "14_days_ago"}}
+        ]
+      }
+    },
+    {
+      "name": "By Owner",
+      "type": "table",
+      "group_by": "VA Owner"
+    }
+  ]
+}

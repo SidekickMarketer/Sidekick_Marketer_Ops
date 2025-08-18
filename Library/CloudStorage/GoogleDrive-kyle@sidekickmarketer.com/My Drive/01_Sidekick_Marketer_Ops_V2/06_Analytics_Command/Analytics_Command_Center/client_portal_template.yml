@@ -1,0 +1,306 @@
+# Client Portal Template Configuration
+# Auto-generated for each new client by Portal_Builder_Agent
+
+client_portal:
+  id: "{{CLIENT_ID}}"
+  name: "{{CLIENT_NAME}} Marketing Dashboard"
+  created_date: "{{CREATED_DATE}}"
+  status: "active"
+  
+branding:
+  logo: "{{CLIENT_LOGO_URL}}"
+  primary_color: "#2C3E50"
+  secondary_color: "#3498DB"
+  font_family: "Inter, sans-serif"
+
+sections:
+  overview:
+    title: "Performance Overview"
+    visibility: "always"
+    widgets:
+      - type: "welcome_message"
+        content: "Welcome to your marketing command center, {{CLIENT_NAME}}!"
+      
+      - type: "kpi_cards"
+        metrics:
+          - name: "Total Leads This Month"
+            source: "ga4.conversions"
+            comparison: "previous_month"
+            goal: "{{MONTHLY_LEAD_GOAL}}"
+          
+          - name: "Cost Per Result"
+            source: "calculated.cpr"
+            comparison: "target"
+            goal: "{{CPR_TARGET}}"
+          
+          - name: "ROI"
+            source: "calculated.roi"
+            format: "percentage"
+            goal: "300%"
+          
+          - name: "Conversion Rate"
+            source: "ga4.conversion_rate"
+            format: "percentage"
+            comparison: "industry_average"
+      
+      - type: "trend_chart"
+        title: "30-Day Lead Generation Trend"
+        data_source: "ga4.daily_leads"
+        chart_type: "line"
+        show_forecast: true
+
+  marketing_channels:
+    title: "Channel Performance"
+    visibility: "configurable"
+    subsections:
+      google_ads:
+        enabled: "{{HAS_GOOGLE_ADS}}"
+        widgets:
+          - type: "campaign_table"
+            columns: ["Campaign", "Impressions", "Clicks", "Conversions", "CPR", "Budget Used"]
+            data_source: "google_ads.campaigns"
+          
+          - type: "keyword_cloud"
+            title: "Top Performing Keywords"
+            data_source: "google_ads.keywords"
+            limit: 20
+      
+      facebook_ads:
+        enabled: "{{HAS_FACEBOOK_ADS}}"
+        widgets:
+          - type: "audience_performance"
+            data_source: "facebook.audiences"
+          
+          - type: "creative_gallery"
+            title: "Top Performing Ads"
+            data_source: "facebook.creatives"
+            sort_by: "ctr"
+      
+      seo:
+        enabled: "{{HAS_SEO}}"
+        widgets:
+          - type: "ranking_tracker"
+            title: "Keyword Rankings"
+            data_source: "se_ranking.keywords"
+            show_movement: true
+          
+          - type: "organic_traffic"
+            data_source: "ga4.organic"
+            comparison: "previous_period"
+      
+      local_seo:
+        enabled: "{{HAS_LOCAL_SEO}}"
+        widgets:
+          - type: "gbp_insights"
+            title: "Google Business Profile"
+            data_source: "brightlocal.gbp"
+          
+          - type: "review_monitor"
+            data_source: "brightlocal.reviews"
+            show_sentiment: true
+      
+      email:
+        enabled: "{{HAS_EMAIL}}"
+        widgets:
+          - type: "campaign_metrics"
+            data_source: "activecampaign.campaigns"
+            metrics: ["sent", "opens", "clicks", "conversions"]
+          
+          - type: "list_growth"
+            data_source: "activecampaign.lists"
+            chart_type: "area"
+      
+      social_media:
+        enabled: "{{HAS_SOCIAL}}"
+        widgets:
+          - type: "engagement_summary"
+            platforms: ["facebook", "instagram", "linkedin"]
+            metrics: ["followers", "engagement_rate", "reach"]
+          
+          - type: "content_calendar"
+            data_source: "planable.scheduled"
+            view: "week"
+
+  analytics:
+    title: "Deep Analytics"
+    visibility: "configurable"
+    widgets:
+      - type: "attribution_model"
+        title: "Multi-Touch Attribution"
+        model_type: "data_driven"
+        touchpoints: ["first_click", "last_click", "linear", "time_decay"]
+      
+      - type: "cohort_analysis"
+        title: "Customer Cohorts"
+        segmentation: "acquisition_month"
+        metrics: ["retention", "ltv", "repeat_rate"]
+      
+      - type: "funnel_visualization"
+        title: "Conversion Funnel"
+        stages:
+          - "Ad Impression"
+          - "Ad Click"
+          - "Landing Page Visit"
+          - "Form Start"
+          - "Form Submit"
+          - "Qualified Lead"
+          - "Customer"
+      
+      - type: "predictive_insights"
+        title: "AI Predictions"
+        predictions:
+          - "Next month lead forecast"
+          - "Budget optimization recommendations"
+          - "Churn risk indicators"
+
+  reporting:
+    title: "Reports & Exports"
+    visibility: "always"
+    features:
+      - type: "automated_reports"
+        schedule:
+          - frequency: "weekly"
+            day: "monday"
+            time: "09:00"
+            format: "pdf"
+            sections: ["overview", "channel_performance", "recommendations"]
+          
+          - frequency: "monthly"
+            day: "1st"
+            time: "08:00"
+            format: "interactive_html"
+            sections: ["all"]
+      
+      - type: "export_center"
+        formats: ["csv", "excel", "pdf", "api"]
+        data_available:
+          - "raw_data"
+          - "aggregated_metrics"
+          - "custom_date_ranges"
+      
+      - type: "custom_reports"
+        builder: true
+        templates:
+          - "Executive Summary"
+          - "Campaign Deep Dive"
+          - "ROI Analysis"
+          - "Competitor Benchmark"
+
+  communication:
+    title: "Communication Hub"
+    visibility: "always"
+    features:
+      - type: "message_center"
+        channels:
+          - "in_portal_chat"
+          - "email_integration"
+          - "slack_connect"
+      
+      - type: "task_tracker"
+        source: "notion.tasks"
+        show_status: true
+        allow_comments: true
+      
+      - type: "document_library"
+        folders:
+          - "Strategies & Plans"
+          - "Reports & Analysis"
+          - "Creative Assets"
+          - "Meeting Notes"
+      
+      - type: "calendar"
+        show_events:
+          - "Campaign launches"
+          - "Report dates"
+          - "Strategy calls"
+          - "Important deadlines"
+
+  settings:
+    title: "Portal Settings"
+    visibility: "admin_only"
+    options:
+      - type: "user_management"
+        features:
+          - "add_users"
+          - "set_permissions"
+          - "activity_log"
+      
+      - type: "notification_preferences"
+        channels:
+          - "email"
+          - "sms"
+          - "in_app"
+        triggers:
+          - "performance_alerts"
+          - "weekly_summary"
+          - "goal_achievement"
+      
+      - type: "data_connections"
+        integrations:
+          - name: "Google Analytics"
+            status: "{{GA_STATUS}}"
+            last_sync: "{{GA_LAST_SYNC}}"
+          
+          - name: "Google Ads"
+            status: "{{GADS_STATUS}}"
+            last_sync: "{{GADS_LAST_SYNC}}"
+          
+          - name: "Facebook"
+            status: "{{FB_STATUS}}"
+            last_sync: "{{FB_LAST_SYNC}}"
+      
+      - type: "white_label"
+        options:
+          - "custom_domain"
+          - "remove_sidekick_branding"
+          - "custom_email_sender"
+
+access_rules:
+  client_admin:
+    can_view: ["all_sections"]
+    can_edit: ["settings.notification_preferences"]
+    can_export: ["all_data"]
+  
+  client_user:
+    can_view: ["overview", "marketing_channels", "reporting"]
+    can_edit: []
+    can_export: ["filtered_data"]
+  
+  sidekick_team:
+    can_view: ["all_sections"]
+    can_edit: ["all_sections"]
+    can_export: ["all_data"]
+    special_permissions: ["impersonate_client", "access_backend"]
+
+automation_hooks:
+  on_portal_creation:
+    - action: "send_welcome_email"
+      template: "client_portal_welcome"
+    
+    - action: "schedule_onboarding_call"
+      delay: "2_days"
+    
+    - action: "create_first_report"
+      type: "baseline_metrics"
+  
+  on_daily_update:
+    - action: "refresh_all_metrics"
+    - action: "check_alert_conditions"
+    - action: "update_predictions"
+  
+  on_alert_triggered:
+    - action: "send_notification"
+    - action: "create_task"
+    - action: "trigger_optimization_agent"
+
+mobile_app:
+  enabled: true
+  features:
+    - "view_dashboards"
+    - "receive_alerts"
+    - "approve_content"
+    - "chat_support"
+  platforms:
+    - "ios"
+    - "android"
+    - "progressive_web_app"

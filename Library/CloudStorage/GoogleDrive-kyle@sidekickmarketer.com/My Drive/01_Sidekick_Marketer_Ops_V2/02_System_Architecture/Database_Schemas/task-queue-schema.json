@@ -1,0 +1,164 @@
+{
+  "database_name": "📋 Task Queue",
+  "description": "Central task management for manual and automated work",
+  "properties": {
+    "Task Name": {
+      "type": "title",
+      "title": {}
+    },
+    "Client": {
+      "type": "relation",
+      "relation": {
+        "database_id": "CLIENT_MASTER_ID",
+        "synced_property_name": "Tasks"
+      }
+    },
+    "Assigned To": {
+      "type": "people",
+      "people": {}
+    },
+    "Due Date": {
+      "type": "date",
+      "date": {}
+    },
+    "Priority": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "🔴 Critical", "color": "red"},
+          {"name": "🟠 High", "color": "orange"},
+          {"name": "🟡 Medium", "color": "yellow"},
+          {"name": "🟢 Low", "color": "green"}
+        ]
+      }
+    },
+    "Status": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "To Do", "color": "gray"},
+          {"name": "In Progress", "color": "yellow"},
+          {"name": "Review", "color": "orange"},
+          {"name": "Done", "color": "green"},
+          {"name": "Blocked", "color": "red"},
+          {"name": "Cancelled", "color": "default"}
+        ]
+      }
+    },
+    "Task Type": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "Manual", "color": "blue"},
+          {"name": "Automated", "color": "purple"},
+          {"name": "Hybrid", "color": "green"}
+        ]
+      }
+    },
+    "Category": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "Sales", "color": "green"},
+          {"name": "Onboarding", "color": "blue"},
+          {"name": "Campaign Setup", "color": "purple"},
+          {"name": "Content Creation", "color": "pink"},
+          {"name": "Reporting", "color": "orange"},
+          {"name": "Admin", "color": "gray"},
+          {"name": "Support", "color": "yellow"}
+        ]
+      }
+    },
+    "Related Agent": {
+      "type": "select",
+      "select": {
+        "options": []
+      }
+    },
+    "Time Estimate (hours)": {
+      "type": "number",
+      "number": {
+        "format": "number"
+      }
+    },
+    "Time Tracked (hours)": {
+      "type": "number",
+      "number": {
+        "format": "number"
+      }
+    },
+    "Description": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Checklist": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Attachments": {
+      "type": "files",
+      "files": {}
+    },
+    "Completion Notes": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Created Date": {
+      "type": "created_time",
+      "created_time": {}
+    },
+    "Completed Date": {
+      "type": "date",
+      "date": {}
+    }
+  },
+  "views": [
+    {
+      "name": "My Tasks",
+      "type": "table",
+      "filter": {
+        "and": [
+          {"property": "Assigned To", "people": {"contains": "me"}},
+          {"property": "Status", "select": {"does_not_equal": "Done"}}
+        ]
+      },
+      "sort": [{"property": "Due Date", "direction": "ascending"}]
+    },
+    {
+      "name": "Today",
+      "type": "table",
+      "filter": {"property": "Due Date", "date": {"equals": "today"}}
+    },
+    {
+      "name": "This Week",
+      "type": "calendar",
+      "calendar_by": "Due Date"
+    },
+    {
+      "name": "By Priority",
+      "type": "board",
+      "group_by": "Priority",
+      "filter": {"property": "Status", "select": {"does_not_equal": "Done"}}
+    },
+    {
+      "name": "By Status",
+      "type": "board",
+      "group_by": "Status"
+    },
+    {
+      "name": "Overdue",
+      "type": "table",
+      "filter": {
+        "and": [
+          {"property": "Due Date", "date": {"before": "today"}},
+          {"property": "Status", "select": {"does_not_equal": "Done"}}
+        ]
+      }
+    },
+    {
+      "name": "Automated Tasks",
+      "type": "table",
+      "filter": {"property": "Task Type", "select": {"equals": "Automated"}}
+    }
+  ]
+}

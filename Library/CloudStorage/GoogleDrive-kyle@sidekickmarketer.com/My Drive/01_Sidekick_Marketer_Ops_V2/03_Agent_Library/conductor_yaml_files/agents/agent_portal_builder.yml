@@ -1,0 +1,133 @@
+agent:
+  id: "portal_builder"
+  name: "Notion_Portal_Builder_Agent"
+  type: "automation"
+  category: "operations"
+  status: "active"
+  version: "1.0"
+
+description: "Automatically creates and configures client portals in Notion with embedded analytics"
+
+triggers:
+  - type: "webhook"
+    source: "make.com"
+    endpoint: "/trigger/portal_builder"
+    condition: "contract_signed"
+  - type: "manual"
+    source: "notion"
+    button: "Create Client Portal"
+
+inputs:
+  required:
+    - "client_info"
+    - "service_package" 
+    - "contract_details"
+  optional:
+    - "brand_assets"
+    - "custom_requirements"
+    - "existing_integrations"
+  sources:
+    - "notion"
+    - "pandadoc"
+    - "agencyanalytics"
+    - "google_drive"
+
+expert_councils:
+  - "User Experience Design Principles"
+  - "Client Success Frameworks"
+  - "Notion Best Practices"
+
+tools:
+  - "Notion API"
+  - "Make.com"
+  - "AgencyAnalytics"
+  - "Google Drive"
+  - "Canva"
+  - "1Password"
+
+execution:
+  model: "gpt-5"
+  temperature: 0.1
+  max_tokens: 4000
+  timeout: 600
+
+process:
+  - step: "Create client workspace in Notion"
+    details: "Set up dedicated workspace with proper permissions"
+    tools: ["Notion API"]
+  - step: "Generate dashboard pages"
+    details: "Create overview, metrics, tasks, and document pages"
+    template: "client_portal_template"
+  - step: "Configure databases"
+    details: "Set up task tracker, content calendar, metrics DB"
+    tools: ["Notion API", "Make.com"]
+  - step: "Embed analytics dashboards"
+    details: "Integrate AgencyAnalytics reports and live data"
+    tools: ["AgencyAnalytics", "Notion API"]
+  - step: "Set permissions and access"
+    details: "Configure client team access levels"
+    tools: ["Notion API", "1Password"]
+  - step: "Add welcome content and branding"
+    details: "Customize with client branding and onboarding content"
+    tools: ["Canva", "Google Drive"]
+  - step: "Connect integrations"
+    details: "Link all relevant data sources and automations"
+    tools: ["Make.com", "AgencyAnalytics"]
+
+outputs:
+  format: "json"
+  schema:
+    type: "object"
+    properties:
+      portal_url:
+        type: "string"
+        description: "Direct link to client portal"
+      access_credentials:
+        type: "object"
+        properties:
+          client_users: "array"
+          permission_levels: "object"
+      integrated_services:
+        type: "array"
+        description: "List of connected integrations"
+      setup_summary:
+        type: "object"
+        properties:
+          pages_created: "array"
+          databases_configured: "array"
+          automations_connected: "array"
+      next_steps:
+        type: "array"
+        description: "Follow-up actions needed"
+  destinations:
+    - "client_notification_email"
+    - "notion_master_database"
+    - "1password_vault"
+
+quality_checks:
+  - "all_pages_functional"
+  - "analytics_embedding_working"
+  - "permissions_correctly_set"
+  - "branding_properly_applied"
+  - "integrations_tested"
+
+next_agents:
+  - "access_credential_agent"
+  - "baseline_metrics_agent" 
+  - "portal_updater_agent"
+
+self_evolution:
+  enabled: true
+  triggers:
+    - condition: "portal_setup_time > 2_hours"
+      creates: "portal_optimization_agent"
+    - condition: "client_portal_satisfaction < 8"
+      creates: "portal_enhancement_agent"
+
+metrics:
+  track:
+    - "setup_completion_time"
+    - "integration_success_rate"
+    - "client_portal_usage"
+    - "client_satisfaction_score"
+  report_to: "analytics_dashboard"

@@ -1,0 +1,134 @@
+{
+  "database_name": "🤖 Agent Executions",
+  "description": "Log of all agent runs and their outputs",
+  "properties": {
+    "Execution ID": {
+      "type": "title",
+      "title": {}
+    },
+    "Agent Name": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "Expert_Council_Orchestrator", "color": "purple"},
+          {"name": "Lead_Enricher", "color": "blue"},
+          {"name": "Discovery_Call_Preparer", "color": "green"},
+          {"name": "Discovery_Synthesizer", "color": "orange"},
+          {"name": "Problem_Identifier", "color": "red"},
+          {"name": "Solution_Mapper", "color": "yellow"},
+          {"name": "Value_Calculator", "color": "pink"},
+          {"name": "Proposal_Builder", "color": "brown"},
+          {"name": "Contract_Generator", "color": "gray"},
+          {"name": "SOW_Generator", "color": "default"},
+          {"name": "Dynamic_Pricing_Agent", "color": "purple"},
+          {"name": "Onboarding_Orchestrator", "color": "blue"},
+          {"name": "Notion_Portal_Builder", "color": "green"},
+          {"name": "Access_Credential_Agent", "color": "orange"},
+          {"name": "Campaign_Builder", "color": "red"},
+          {"name": "Content_Creator", "color": "yellow"},
+          {"name": "Performance_Analyzer", "color": "pink"},
+          {"name": "Report_Generator", "color": "brown"},
+          {"name": "Retention_Guardian", "color": "gray"},
+          {"name": "Upsell_Identifier", "color": "purple"}
+        ]
+      }
+    },
+    "Client": {
+      "type": "relation",
+      "relation": {
+        "database_id": "CLIENT_MASTER_ID",
+        "synced_property_name": "Agent Executions"
+      }
+    },
+    "Executed At": {
+      "type": "created_time",
+      "created_time": {}
+    },
+    "Status": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "Success", "color": "green"},
+          {"name": "Failed", "color": "red"},
+          {"name": "Pending", "color": "yellow"},
+          {"name": "Partial", "color": "orange"}
+        ]
+      }
+    },
+    "Execution Time (seconds)": {
+      "type": "number",
+      "number": {
+        "format": "number"
+      }
+    },
+    "Output Location": {
+      "type": "url",
+      "url": {}
+    },
+    "Insights Generated": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Error Message": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Tokens Used": {
+      "type": "number",
+      "number": {
+        "format": "number"
+      }
+    },
+    "Cost": {
+      "type": "number",
+      "number": {
+        "format": "dollar"
+      }
+    },
+    "Triggered By": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "Manual", "color": "blue"},
+          {"name": "Scheduled", "color": "green"},
+          {"name": "Webhook", "color": "purple"},
+          {"name": "Previous Agent", "color": "orange"},
+          {"name": "API Call", "color": "gray"}
+        ]
+      }
+    },
+    "Next Agent Triggered": {
+      "type": "select",
+      "select": {
+        "options": []
+      }
+    }
+  },
+  "views": [
+    {
+      "name": "Today's Executions",
+      "type": "table",
+      "filter": {"property": "Executed At", "date": {"equals": "today"}}
+    },
+    {
+      "name": "Failed Executions",
+      "type": "table",
+      "filter": {"property": "Status", "select": {"equals": "Failed"}}
+    },
+    {
+      "name": "By Agent",
+      "type": "board",
+      "group_by": "Agent Name"
+    },
+    {
+      "name": "By Client",
+      "type": "table",
+      "group_by": "Client"
+    },
+    {
+      "name": "Performance Stats",
+      "type": "table",
+      "sort": [{"property": "Execution Time (seconds)", "direction": "descending"}]
+    }
+  ]
+}

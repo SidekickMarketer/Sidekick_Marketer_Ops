@@ -1,0 +1,120 @@
+agent:
+  id: "001"
+  name: "Lead_Hunter"
+  type: "data_gathering"
+  category: "lead_generation"
+  status: "active"
+  version: "1.0"
+
+description: "Identifies and qualifies potential leads using Apollo.io and enrichment tools"
+
+triggers:
+  - type: "schedule"
+    cron: "0 9 * * *"
+    description: "Run daily at 9 AM"
+  - type: "condition"
+    rule: "pipeline_count < 20"
+    description: "Auto-trigger when pipeline is low"
+  - type: "webhook"
+    source: "make.com"
+    endpoint: "/trigger/lead_hunter"
+
+inputs:
+  required:
+    - "industry"
+    - "ideal_customer_profile"
+    - "geography"
+  optional:
+    - "company_size_range"
+    - "technology_stack"
+    - "revenue_range"
+  sources:
+    - "apollo_io"
+    - "linkedin"
+    - "similarweb"
+
+expert_councils:
+  - "Aaron Ross - Predictable Revenue"
+  - "Jeb Blount - Fanatical Prospecting"
+  - "Anthony Iannarino - Sales Methods"
+
+tools:
+  - "Apollo.io"
+  - "LinkedIn Sales Navigator"
+  - "SimilarWeb"
+  - "ActiveCampaign"
+  - "Notion"
+
+execution:
+  model_selection:
+    primary: "gpt-5"  # Fast processing for lead generation
+    fallback: "gpt-4-turbo"
+    strategy: "speed_optimized"
+  temperature: 0.3
+  max_tokens: 4000
+  timeout: 300
+
+process:
+  - step: "Search Apollo.io for matching companies"
+    details: "Use ICP criteria to find prospects"
+    tools: ["Apollo.io"]
+  - step: "Enrich with SimilarWeb data"
+    details: "Add website traffic and tech stack info"
+    tools: ["SimilarWeb"]
+  - step: "Score based on ICP match"
+    details: "Apply expert frameworks for qualification"
+    framework: "Aaron Ross qualification matrix"
+  - step: "Export qualified leads to ActiveCampaign"
+    details: "Create lead records with enrichment data"
+    tools: ["ActiveCampaign", "Notion"]
+
+outputs:
+  format: "json"
+  schema:
+    type: "object"
+    properties:
+      qualified_leads:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            company_name: "string"
+            contact_name: "string"
+            email: "string"
+            phone: "string"
+            lead_score: "number"
+            qualification_reasons: "array"
+      next_actions:
+        type: "array"
+      execution_summary:
+        type: "object"
+  destinations:
+    - "notion_database"
+    - "activecampaign"
+    - "client_portal"
+
+quality_checks:
+  - "completeness"
+  - "email_validation"
+  - "score_accuracy" 
+  - "expert_framework_applied"
+
+next_agents:
+  - "002_lead_enricher"
+  - "003_deep_intelligence_gatherer"
+
+self_evolution:
+  enabled: true
+  triggers:
+    - condition: "enrichment_rate < 70%"
+      creates: "enhanced_enrichment_agent"
+    - condition: "lead_quality_score < 6"
+      creates: "qualification_improvement_agent"
+
+metrics:
+  track:
+    - "leads_found"
+    - "qualification_rate"
+    - "time_to_completion"
+    - "cost_per_lead"
+  report_to: "analytics_dashboard"

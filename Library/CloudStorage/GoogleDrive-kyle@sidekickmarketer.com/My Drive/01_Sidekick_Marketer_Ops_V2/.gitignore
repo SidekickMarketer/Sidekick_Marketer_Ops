@@ -1,0 +1,40 @@
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# API Keys and Secrets
+*.key
+secrets.json
+.env.local
+
+# Large data files
+*.csv
+*.xlsx
+*.xls
+
+# Backup files
+*.backup
+*.bak

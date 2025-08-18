@@ -1,0 +1,165 @@
+# Universal Client Profile Template for Sidekick Marketer
+# This template works with your actual tool stack
+
+client_profile:
+  # Basic client information
+  client_id: "${CLIENT_ID}"
+  name: "${CLIENT_NAME}"
+  industry: "${INDUSTRY}"
+  business_model: "${BUSINESS_MODEL}"
+  
+  # Service package configuration
+  package:
+    type: "${PACKAGE_TYPE}"  # growth/leader/domination
+    monthly_value: "${MONTHLY_VALUE}"
+    service_tiers: "${SERVICE_TIERS}"  # e.g., ["S0", "S1", "S3", "S7"]
+    
+  # Your actual tool integrations
+  integrations:
+    # Analytics & Reporting
+    analytics:
+      google_analytics: "${GA4_PROPERTY_ID}"
+      google_search_console: "${GSC_PROPERTY_URL}"
+      agency_analytics: "${AA_CAMPAIGN_ID}"
+      
+    # Social Media
+    social:
+      planable_workspace: "${PLANABLE_WORKSPACE_ID}"
+      facebook_page: "${FACEBOOK_PAGE_ID}"
+      linkedin_company: "${LINKEDIN_COMPANY_ID}"
+      
+    # SEO & Local
+    seo:
+      se_ranking_project: "${SE_RANKING_PROJECT_ID}"
+      brightlocal_location: "${BRIGHTLOCAL_LOCATION_ID}"
+      
+    # CRM & Email
+    crm:
+      activecampaign_list: "${AC_LIST_ID}"
+      apollo_io_workspace: "${APOLLO_WORKSPACE_ID}"
+      
+    # Content & Design
+    content:
+      webflow_site: "${WEBFLOW_SITE_ID}"  # if applicable
+      wordpress_site: "${WP_SITE_URL}"    # if applicable
+      canva_brand_kit: "${CANVA_BRAND_ID}"
+      
+    # Communication & Data
+    communication:
+      slack_channel: "${SLACK_CHANNEL_ID}"
+      zoom_account: "${ZOOM_USER_ID}"
+      
+    # Data Processing
+    data:
+      parsio_inbox: "${PARSIO_INBOX_ID}"
+      google_sheets: "${GSHEETS_ID}"
+      
+  # Client portal configuration  
+  portal:
+    notion_workspace: "${NOTION_WORKSPACE_ID}"
+    agencyanalytics_embed: "${AA_EMBED_URL}"
+    access_level: "${ACCESS_LEVEL}"  # view/edit/admin
+    
+  # Performance baselines (captured by baseline_metrics agent)
+  baselines:
+    website_traffic: "${BASELINE_TRAFFIC}"
+    search_rankings: "${BASELINE_RANKINGS}"
+    social_engagement: "${BASELINE_ENGAGEMENT}"
+    lead_generation: "${BASELINE_LEADS}"
+    conversion_rate: "${BASELINE_CONVERSION}"
+    
+  # Success metrics & goals
+  goals:
+    primary_kpis: "${PRIMARY_KPIS}"
+    target_growth: "${TARGET_GROWTH_PERCENTAGE}"
+    timeline: "${PROJECT_TIMELINE}"
+    success_criteria: "${SUCCESS_CRITERIA}"
+    
+  # Agent configuration preferences
+  agent_preferences:
+    primary_model: "gpt-5"
+    fallback_model: "claude-3.5-sonnet"
+    creativity_level: "${CREATIVITY_LEVEL}"  # low/medium/high
+    communication_style: "${COMMUNICATION_STYLE}"  # formal/casual/technical
+    
+  # Self-evolution settings
+  evolution_settings:
+    auto_create_agents: true
+    complexity_threshold: "${COMPLEXITY_THRESHOLD}"
+    value_threshold: "${VALUE_THRESHOLD}"
+    learning_enabled: true
+    
+  # Workflow routing rules
+  routing:
+    discovery_to_proposal: "automatic"
+    proposal_to_contract: "manual_approval"
+    contract_to_delivery: "automatic"
+    reporting_frequency: "${REPORTING_FREQUENCY}"  # daily/weekly/monthly
+    
+  # Security & compliance
+  security:
+    credential_storage: "1password_vault"
+    data_retention: "${DATA_RETENTION_PERIOD}"
+    privacy_level: "${PRIVACY_LEVEL}"
+    compliance_requirements: "${COMPLIANCE_REQUIREMENTS}"
+
+# Tool-specific configurations using your actual subscriptions
+tool_configurations:
+  agencyanalytics:
+    campaign_name: "${CLIENT_NAME} - ${PACKAGE_TYPE}"
+    dashboard_template: "sidekick_standard"
+    reporting_frequency: "weekly"
+    
+  activecampaign:
+    list_name: "${CLIENT_NAME} - Prospects"
+    automation_tags: ["${PACKAGE_TYPE}", "${INDUSTRY}"]
+    
+  planable:
+    workspace_name: "${CLIENT_NAME} Social"
+    posting_schedule: "${SOCIAL_SCHEDULE}"
+    approval_workflow: "${APPROVAL_WORKFLOW}"
+    
+  se_ranking:
+    project_name: "${CLIENT_NAME} SEO"
+    keyword_limit: "${KEYWORD_LIMIT}"
+    competitor_tracking: "${COMPETITOR_LIST}"
+    
+  brightlocal:
+    location_name: "${CLIENT_NAME} - ${LOCATION}"
+    citation_monitoring: true
+    review_monitoring: true
+    
+  notion:
+    workspace_name: "${CLIENT_NAME} Portal"
+    template: "sidekick_client_portal_v2"
+    permission_groups: ["client_team", "sidekick_team"]
+    
+  make_com:
+    scenario_prefix: "${CLIENT_ID}"
+    webhook_urls: "${WEBHOOK_URLS}"
+    error_handling: "escalate_to_human"
+
+# Quality standards for this client
+quality_standards:
+  content_approval: "${CONTENT_APPROVAL_REQUIRED}"
+  client_review_cycle: "${REVIEW_CYCLE_DAYS}"
+  quality_score_minimum: 8
+  expert_frameworks_required: true
+  value_quantification_required: true
+
+# Billing & contract information
+billing:
+  contract_start: "${CONTRACT_START_DATE}"
+  billing_frequency: "${BILLING_FREQUENCY}"
+  payment_method: "${PAYMENT_METHOD}"
+  auto_renewal: "${AUTO_RENEWAL}"
+
+# Emergency contacts & escalation
+escalation:
+  primary_contact: "${PRIMARY_CONTACT_EMAIL}"
+  backup_contact: "${BACKUP_CONTACT_EMAIL}"
+  escalation_triggers:
+    - "quality_score < 6"
+    - "client_satisfaction < 7"
+    - "deadline_missed"
+    - "agent_failure_rate > 10%"

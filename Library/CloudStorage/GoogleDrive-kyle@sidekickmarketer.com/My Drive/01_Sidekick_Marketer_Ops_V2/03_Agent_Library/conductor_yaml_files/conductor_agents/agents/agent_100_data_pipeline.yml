@@ -1,0 +1,120 @@
+agent:
+  id: "100"
+  name: "Data_Pipeline_Orchestrator"
+  type: "data_engineering"
+  category: "analytics"
+  status: "active"
+  version: "1.0"
+
+description: "Orchestrates data flow from all sources to analytics platforms using your actual tool stack"
+
+triggers:
+  - type: "schedule"
+    cron: "0 */6 * * *"
+    description: "Run every 6 hours"
+  - type: "webhook"
+    source: "make.com"
+    endpoint: "/trigger/data_pipeline"
+  - type: "condition"
+    rule: "data_freshness > 24_hours"
+
+inputs:
+  required:
+    - "client_data_sources"
+    - "schema_requirements"
+    - "update_frequency"
+  optional:
+    - "custom_transformations"
+    - "data_quality_rules"
+  sources:
+    - "ga4"
+    - "google_search_console"
+    - "agencyanalytics"
+    - "activecampaign"
+    - "planable"
+    - "se_ranking"
+    - "brightlocal"
+
+tools:
+  - "Parsio"
+  - "Make.com"
+  - "Google Sheets"
+  - "Julius AI"
+  - "AgencyAnalytics"
+  - "Notion API"
+
+execution:
+  model: "gpt-5"
+  temperature: 0.2
+  max_tokens: 4000
+  timeout: 1200
+
+process:
+  - step: "Connect to all data sources"
+    details: "Establish API connections to GA4, GSC, AgencyAnalytics, etc."
+    tools: ["Make.com", "API connectors"]
+  - step: "Set up ETL pipelines in Make.com"
+    details: "Configure data extraction, transformation, and loading"
+    tools: ["Make.com", "Parsio"]
+  - step: "Configure data transformations"
+    details: "Standardize formats, clean data, apply business logic"
+    tools: ["Julius AI", "Google Sheets"]
+  - step: "Validate data quality"
+    details: "Check for completeness, accuracy, consistency"
+    framework: "Data quality framework"
+  - step: "Schedule automated updates"
+    details: "Set up recurring data pulls and updates"
+    tools: ["Make.com"]
+  - step: "Monitor pipeline health"
+    details: "Track success rates, identify failures"
+    tools: ["AgencyAnalytics", "Notion"]
+
+outputs:
+  format: "json"
+  schema:
+    type: "object"
+    properties:
+      pipeline_status:
+        type: "object"
+        properties:
+          sources_connected: "array"
+          data_freshness: "object"
+          quality_score: "number"
+      data_summary:
+        type: "object"
+        properties:
+          records_processed: "number"
+          errors_encountered: "array"
+          processing_time: "number"
+      next_update_schedule:
+        type: "string"
+  destinations:
+    - "agencyanalytics"
+    - "notion_database"
+    - "client_portal"
+
+quality_checks:
+  - "data_completeness"
+  - "accuracy_validation"
+  - "freshness_requirements_met"
+  - "pipeline_performance"
+
+next_agents:
+  - "101_performance_intelligence"
+  - "102_roi_calculator"
+
+self_evolution:
+  enabled: true
+  triggers:
+    - condition: "data_quality_score < 85%"
+      creates: "data_quality_improvement_agent"
+    - condition: "pipeline_failure_rate > 5%"
+      creates: "pipeline_optimization_agent"
+
+metrics:
+  track:
+    - "data_processing_volume"
+    - "pipeline_success_rate"
+    - "data_quality_score"
+    - "update_frequency_compliance"
+  report_to: "analytics_dashboard"

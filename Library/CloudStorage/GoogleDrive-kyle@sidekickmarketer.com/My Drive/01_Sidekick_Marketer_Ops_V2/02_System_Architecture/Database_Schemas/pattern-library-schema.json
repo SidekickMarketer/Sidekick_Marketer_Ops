@@ -1,0 +1,136 @@
+{
+  "database_name": "🔍 Pattern Library",
+  "description": "System learning and intelligence patterns",
+  "properties": {
+    "Pattern ID": {
+      "type": "title",
+      "title": {}
+    },
+    "Pattern Type": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "Problem", "color": "red"},
+          {"name": "Opportunity", "color": "green"},
+          {"name": "Process", "color": "blue"},
+          {"name": "Integration", "color": "purple"},
+          {"name": "Objection", "color": "orange"},
+          {"name": "Success Formula", "color": "pink"},
+          {"name": "Failure Mode", "color": "gray"}
+        ]
+      }
+    },
+    "Pattern Name": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Description": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "First Seen": {
+      "type": "date",
+      "date": {}
+    },
+    "Times Encountered": {
+      "type": "number",
+      "number": {
+        "format": "number"
+      }
+    },
+    "Clients Affected": {
+      "type": "relation",
+      "relation": {
+        "database_id": "CLIENT_MASTER_ID",
+        "synced_property_name": "Patterns"
+      }
+    },
+    "Industry Specific": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "All Industries", "color": "default"},
+          {"name": "Landscaping", "color": "green"},
+          {"name": "Home Services", "color": "blue"},
+          {"name": "Construction", "color": "orange"},
+          {"name": "Professional Services", "color": "purple"},
+          {"name": "SaaS", "color": "pink"},
+          {"name": "eCommerce", "color": "yellow"}
+        ]
+      }
+    },
+    "Solution Applied": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Success Rate": {
+      "type": "number",
+      "number": {
+        "format": "percent"
+      }
+    },
+    "Agent Created": {
+      "type": "select",
+      "select": {
+        "options": []
+      }
+    },
+    "Reusable": {
+      "type": "checkbox",
+      "checkbox": {}
+    },
+    "Template Created": {
+      "type": "checkbox",
+      "checkbox": {}
+    },
+    "Documentation Link": {
+      "type": "url",
+      "url": {}
+    },
+    "Value Generated": {
+      "type": "number",
+      "number": {
+        "format": "dollar"
+      }
+    },
+    "Confidence Level": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "Validated", "color": "green"},
+          {"name": "Testing", "color": "yellow"},
+          {"name": "Hypothesis", "color": "orange"},
+          {"name": "Deprecated", "color": "red"}
+        ]
+      }
+    }
+  },
+  "views": [
+    {
+      "name": "High Value Patterns",
+      "type": "table",
+      "filter": {"property": "Value Generated", "number": {"greater_than": 10000}},
+      "sort": [{"property": "Value Generated", "direction": "descending"}]
+    },
+    {
+      "name": "Reusable Templates",
+      "type": "gallery",
+      "filter": {"property": "Reusable", "checkbox": {"equals": true}}
+    },
+    {
+      "name": "By Industry",
+      "type": "board",
+      "group_by": "Industry Specific"
+    },
+    {
+      "name": "Problems vs Opportunities",
+      "type": "board",
+      "group_by": "Pattern Type"
+    },
+    {
+      "name": "Most Common",
+      "type": "table",
+      "sort": [{"property": "Times Encountered", "direction": "descending"}]
+    }
+  ]
+}

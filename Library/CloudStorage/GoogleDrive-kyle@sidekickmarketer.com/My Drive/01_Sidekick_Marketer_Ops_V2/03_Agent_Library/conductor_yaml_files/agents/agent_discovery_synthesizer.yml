@@ -1,0 +1,147 @@
+agent:
+  id: "discovery_synthesizer"
+  name: "Discovery_Synthesizer_Agent"
+  type: "analysis"
+  category: "intelligence"
+  status: "active"
+  version: "1.0"
+
+description: "Synthesizes discovery call data into comprehensive 50-page analysis using expert mental models"
+
+triggers:
+  - type: "webhook"
+    source: "make.com"
+    endpoint: "/trigger/discovery_synthesis"
+  - type: "manual"
+    source: "notion"
+    button: "Start Discovery Synthesis"
+
+inputs:
+  required:
+    - "call_transcript"
+    - "meeting_notes"
+    - "research_data"
+  optional:
+    - "previous_discovery_data"
+    - "industry_context"
+    - "competitor_analysis"
+  sources:
+    - "fireflies_ai"
+    - "wispr_flow"
+    - "notion"
+    - "apollo_io"
+
+expert_councils:
+  - "Charlie Munger - Mental Models"
+  - "Peter Drucker - Essential Questions"
+  - "Clayton Christensen - Jobs-to-be-done"
+  - "Michael Porter - Competitive Strategy"
+
+tools:
+  - "Fireflies.ai"
+  - "Julius AI"
+  - "Notion"
+  - "Google Drive"
+  - "Perplexity Pro"
+
+execution:
+  model_selection:
+    primary: "claude-3.5-sonnet"  # Best for deep analysis
+    fallback: "claude-3.5-opus"
+    strategy: "quality_optimized"
+    note: "Upgrade to Claude 4 when available"
+  temperature: 0.3
+  max_tokens: 8000
+  timeout: 1800
+
+process:
+  - step: "Apply Munger mental models analysis"
+    details: "Use inversion, first principles, circle of competence"
+    framework: "Charlie Munger's decision-making framework"
+  - step: "Use Drucker essential questions"
+    details: "What is our business? Who is our customer? What does the customer value?"
+    framework: "Peter Drucker's 5 essential questions"
+  - step: "Jobs-to-be-done analysis"
+    details: "Identify functional, emotional, and social jobs"
+    framework: "Clayton Christensen's JTBD framework"
+  - step: "Map opportunity landscape"
+    details: "Identify leverage points and constraints"
+    tools: ["Julius AI", "Perplexity Pro"]
+  - step: "Generate strategic insights"
+    details: "Create 50-page comprehensive analysis"
+    output: "discovery_analysis_document"
+  - step: "Create action priorities"
+    details: "Rank opportunities by impact and effort"
+    framework: "Impact/effort matrix"
+
+outputs:
+  format: "structured_document"
+  schema:
+    type: "object"
+    properties:
+      executive_summary:
+        type: "object"
+        properties:
+          key_insights: "array"
+          strategic_recommendations: "array"
+          critical_success_factors: "array"
+      mental_models_applied:
+        type: "array"
+        description: "Which expert frameworks were used"
+      opportunity_analysis:
+        type: "object"
+        properties:
+          market_opportunity: "object"
+          competitive_advantage: "object"
+          growth_potential: "object"
+      strategic_recommendations:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            recommendation: "string"
+            rationale: "string"
+            expected_impact: "string"
+            implementation_complexity: "string"
+      next_actions:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            action: "string"
+            priority: "string"
+            timeline: "string"
+            responsible_party: "string"
+  destinations:
+    - "google_drive"
+    - "notion_database"
+    - "client_portal"
+
+quality_checks:
+  - "mental_models_properly_applied"
+  - "insights_actionable"
+  - "analysis_comprehensive"
+  - "expert_frameworks_cited"
+  - "recommendations_prioritized"
+
+next_agents:
+  - "010_strategy_architect"
+  - "sow_generator"
+  - "015_proposal_builder"
+
+self_evolution:
+  enabled: true
+  triggers:
+    - condition: "analysis_depth_score < 8"
+      creates: "deeper_analysis_agent"
+    - condition: "client_satisfaction < 9"
+      creates: "client_customization_agent"
+
+metrics:
+  track:
+    - "analysis_completeness"
+    - "insight_quality_score"
+    - "client_satisfaction_rating"
+    - "time_to_completion"
+    - "strategic_accuracy"
+  report_to: "analytics_dashboard"

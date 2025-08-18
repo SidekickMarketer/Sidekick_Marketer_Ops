@@ -1,0 +1,265 @@
+# Analytics Command Center Configuration
+# Sidekick Marketer - Real-time Performance Monitoring
+
+dashboard:
+  name: "Sidekick Analytics Command Center"
+  version: "1.0"
+  refresh_rate: 300  # 5 minutes
+  timezone: "America/Chicago"
+
+data_sources:
+  primary:
+    - name: "Google Analytics 4"
+      api: "ga4"
+      credentials: "${GA4_API_KEY}"
+      sync_frequency: "hourly"
+    
+    - name: "Google Search Console"
+      api: "gsc"
+      credentials: "${GSC_API_KEY}"
+      sync_frequency: "daily"
+    
+    - name: "AgencyAnalytics"
+      api: "agency_analytics"
+      credentials: "${AGENCYANALYTICS_API_KEY}"
+      sync_frequency: "real-time"
+  
+  secondary:
+    - name: "SE Ranking"
+      api: "se_ranking"
+      credentials: "${SE_RANKING_API_KEY}"
+      sync_frequency: "daily"
+    
+    - name: "BrightLocal"
+      api: "brightlocal"
+      credentials: "${BRIGHTLOCAL_API_KEY}"
+      sync_frequency: "daily"
+    
+    - name: "Julius AI"
+      api: "julius"
+      credentials: "${JULIUS_AI_KEY}"
+      sync_frequency: "on-demand"
+
+metrics:
+  kpi_tracking:
+    - metric: "Total Leads Generated"
+      source: "ga4"
+      calculation: "sum(conversions.lead_form_submit)"
+      target: 100
+      alert_threshold: 0.8
+    
+    - metric: "Cost Per Result (CPR)"
+      source: "multiple"
+      calculation: "total_spend / total_conversions"
+      target: 100
+      alert_threshold: 1.2
+    
+    - metric: "Client Satisfaction Score"
+      source: "notion"
+      calculation: "avg(client_feedback.score)"
+      target: 9
+      alert_threshold: 8
+    
+    - metric: "Agent Success Rate"
+      source: "conductor"
+      calculation: "successful_runs / total_runs"
+      target: 0.95
+      alert_threshold: 0.85
+    
+    - metric: "Automation Coverage"
+      source: "make.com"
+      calculation: "automated_tasks / total_tasks"
+      target: 0.9
+      alert_threshold: 0.7
+
+widgets:
+  - type: "scorecard"
+    title: "Daily Performance"
+    position: [0, 0]
+    size: [4, 2]
+    metrics:
+      - "leads_today"
+      - "cpr_today"
+      - "revenue_today"
+      - "client_health"
+  
+  - type: "line_chart"
+    title: "30-Day Lead Trend"
+    position: [4, 0]
+    size: [4, 2]
+    data: "leads_over_time"
+    comparison: "previous_period"
+  
+  - type: "heatmap"
+    title: "Agent Activity"
+    position: [8, 0]
+    size: [4, 2]
+    data: "agent_execution_matrix"
+    color_scale: "green_red"
+  
+  - type: "table"
+    title: "Client Performance"
+    position: [0, 2]
+    size: [6, 3]
+    columns:
+      - "client_name"
+      - "leads_mtd"
+      - "cpr"
+      - "budget_spent"
+      - "roi"
+      - "health_score"
+    sortable: true
+    filterable: true
+  
+  - type: "funnel"
+    title: "Conversion Funnel"
+    position: [6, 2]
+    size: [3, 3]
+    stages:
+      - "impressions"
+      - "clicks"
+      - "landing_page_views"
+      - "form_starts"
+      - "form_submits"
+      - "qualified_leads"
+  
+  - type: "gauge"
+    title: "System Health"
+    position: [9, 2]
+    size: [3, 3]
+    metrics:
+      - name: "API Status"
+        value: "api_health_score"
+        ranges: 
+          - [0, 70, "red"]
+          - [70, 90, "yellow"]
+          - [90, 100, "green"]
+      - name: "Agent Performance"
+        value: "agent_success_rate"
+      - name: "Data Freshness"
+        value: "data_sync_status"
+
+alerts:
+  - name: "CPR Spike Alert"
+    condition: "cpr > target * 1.5"
+    severity: "critical"
+    notification:
+      - "slack"
+      - "email"
+      - "sms"
+    auto_action: "trigger_cpr_optimization_agent"
+  
+  - name: "Lead Volume Drop"
+    condition: "daily_leads < rolling_avg_7d * 0.5"
+    severity: "high"
+    notification:
+      - "slack"
+      - "email"
+    auto_action: "trigger_lead_diagnosis_agent"
+  
+  - name: "Agent Failure"
+    condition: "agent_failure_rate > 0.1"
+    severity: "medium"
+    notification:
+      - "slack"
+    auto_action: "trigger_agent_repair_workflow"
+  
+  - name: "Client Health Warning"
+    condition: "client_health_score < 7"
+    severity: "high"
+    notification:
+      - "email"
+      - "slack"
+    auto_action: "trigger_client_recovery_workflow"
+
+reporting:
+  scheduled_reports:
+    - name: "Daily Performance Summary"
+      schedule: "daily_9am"
+      recipients: ["kyle@sidekickmarketer.com"]
+      format: "pdf"
+      sections:
+        - "executive_summary"
+        - "kpi_scorecard"
+        - "client_performance"
+        - "agent_activity"
+    
+    - name: "Weekly Deep Dive"
+      schedule: "monday_8am"
+      recipients: ["team@sidekickmarketer.com"]
+      format: "interactive_html"
+      sections:
+        - "week_over_week_comparison"
+        - "funnel_analysis"
+        - "attribution_report"
+        - "optimization_opportunities"
+    
+    - name: "Monthly Client Reports"
+      schedule: "first_of_month"
+      recipients: ["dynamic_client_list"]
+      format: "branded_pdf"
+      sections:
+        - "client_specific_metrics"
+        - "roi_analysis"
+        - "recommendations"
+        - "next_month_focus"
+
+integrations:
+  notion:
+    database_id: "${NOTION_ANALYTICS_DB}"
+    sync_fields:
+      - "daily_metrics"
+      - "client_health_scores"
+      - "agent_performance"
+  
+  slack:
+    webhook_url: "${SLACK_WEBHOOK_URL}"
+    channels:
+      alerts: "#analytics-alerts"
+      daily: "#daily-metrics"
+      wins: "#client-wins"
+  
+  make_com:
+    webhook_triggers:
+      - "dashboard_refresh"
+      - "alert_triggered"
+      - "report_generated"
+
+intelligence_layer:
+  pattern_detection:
+    enabled: true
+    algorithms:
+      - "anomaly_detection"
+      - "trend_analysis"
+      - "correlation_matrix"
+    auto_insights: true
+  
+  predictive_analytics:
+    enabled: true
+    models:
+      - "lead_volume_forecast"
+      - "cpr_prediction"
+      - "churn_risk_scoring"
+    update_frequency: "daily"
+  
+  recommendations:
+    enabled: true
+    types:
+      - "optimization_opportunities"
+      - "budget_reallocation"
+      - "campaign_adjustments"
+      - "new_agent_creation"
+
+access_control:
+  roles:
+    - name: "admin"
+      permissions: ["all"]
+      users: ["kyle@sidekickmarketer.com"]
+    
+    - name: "team"
+      permissions: ["view", "export", "comment"]
+      users: ["team@sidekickmarketer.com"]
+    
+    - name: "client"
+      permissions: ["view_own", "export_own"]
+      users: ["dynamic_client_emails"]

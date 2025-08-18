@@ -1,0 +1,202 @@
+{
+  "database_name": "📊 Quick Metrics",
+  "description": "Key performance indicators and metrics tracking",
+  "properties": {
+    "Metric Name": {
+      "type": "title",
+      "title": {}
+    },
+    "Current Value": {
+      "type": "number",
+      "number": {
+        "format": "number"
+      }
+    },
+    "Target": {
+      "type": "number",
+      "number": {
+        "format": "number"
+      }
+    },
+    "Previous Value": {
+      "type": "number",
+      "number": {
+        "format": "number"
+      }
+    },
+    "Change %": {
+      "type": "formula",
+      "formula": {
+        "expression": "if(prop(\"Previous Value\") > 0, round((prop(\"Current Value\") - prop(\"Previous Value\")) / prop(\"Previous Value\") * 100), 0)"
+      }
+    },
+    "Status": {
+      "type": "formula",
+      "formula": {
+        "expression": "if(prop(\"Current Value\") >= prop(\"Target\"), \"🟢 On Track\", if(prop(\"Current Value\") >= prop(\"Target\") * 0.8, \"🟡 Close\", \"🔴 Behind\"))"
+      }
+    },
+    "Period": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "Daily", "color": "blue"},
+          {"name": "Weekly", "color": "green"},
+          {"name": "Monthly", "color": "purple"},
+          {"name": "Quarterly", "color": "orange"},
+          {"name": "Yearly", "color": "red"}
+        ]
+      }
+    },
+    "Category": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "Revenue", "color": "green"},
+          {"name": "Pipeline", "color": "blue"},
+          {"name": "Operations", "color": "purple"},
+          {"name": "Client Health", "color": "orange"},
+          {"name": "Performance", "color": "pink"},
+          {"name": "Team", "color": "yellow"}
+        ]
+      }
+    },
+    "Last Updated": {
+      "type": "last_edited_time",
+      "last_edited_time": {}
+    },
+    "Data Source": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "Manual Entry", "color": "gray"},
+          {"name": "Client Master", "color": "blue"},
+          {"name": "Task Queue", "color": "green"},
+          {"name": "Agent Executions", "color": "purple"},
+          {"name": "External API", "color": "orange"}
+        ]
+      }
+    },
+    "Description": {
+      "type": "rich_text",
+      "rich_text": {}
+    },
+    "Icon": {
+      "type": "select",
+      "select": {
+        "options": [
+          {"name": "💰", "color": "default"},
+          {"name": "📈", "color": "default"},
+          {"name": "👥", "color": "default"},
+          {"name": "🎯", "color": "default"},
+          {"name": "⚡", "color": "default"},
+          {"name": "🏆", "color": "default"}
+        ]
+      }
+    }
+  },
+  "initial_metrics": [
+    {
+      "Metric Name": "Active Clients",
+      "Current Value": 0,
+      "Target": 20,
+      "Period": "Monthly",
+      "Category": "Pipeline",
+      "Icon": "👥"
+    },
+    {
+      "Metric Name": "Monthly Recurring Revenue",
+      "Current Value": 0,
+      "Target": 100000,
+      "Period": "Monthly",
+      "Category": "Revenue",
+      "Icon": "💰"
+    },
+    {
+      "Metric Name": "Pipeline Value",
+      "Current Value": 0,
+      "Target": 250000,
+      "Period": "Monthly",
+      "Category": "Pipeline",
+      "Icon": "📈"
+    },
+    {
+      "Metric Name": "Average Client Health Score",
+      "Current Value": 0,
+      "Target": 8,
+      "Period": "Weekly",
+      "Category": "Client Health",
+      "Icon": "🎯"
+    },
+    {
+      "Metric Name": "Tasks Completed This Week",
+      "Current Value": 0,
+      "Target": 50,
+      "Period": "Weekly",
+      "Category": "Operations",
+      "Icon": "⚡"
+    },
+    {
+      "Metric Name": "Agent Executions Today",
+      "Current Value": 0,
+      "Target": 100,
+      "Period": "Daily",
+      "Category": "Performance",
+      "Icon": "🤖"
+    },
+    {
+      "Metric Name": "Conversion Rate (Discovery to Proposal)",
+      "Current Value": 0,
+      "Target": 75,
+      "Period": "Monthly",
+      "Category": "Pipeline",
+      "Icon": "🏆"
+    },
+    {
+      "Metric Name": "Average Deal Size",
+      "Current Value": 0,
+      "Target": 5000,
+      "Period": "Monthly",
+      "Category": "Revenue",
+      "Icon": "💰"
+    },
+    {
+      "Metric Name": "Client Retention Rate",
+      "Current Value": 0,
+      "Target": 95,
+      "Period": "Quarterly",
+      "Category": "Client Health",
+      "Icon": "👥"
+    },
+    {
+      "Metric Name": "Time to Onboard (days)",
+      "Current Value": 0,
+      "Target": 3,
+      "Period": "Monthly",
+      "Category": "Operations",
+      "Icon": "⚡"
+    }
+  ],
+  "views": [
+    {
+      "name": "Dashboard",
+      "type": "gallery",
+      "sort": [{"property": "Category", "direction": "ascending"}]
+    },
+    {
+      "name": "Revenue Metrics",
+      "type": "table",
+      "filter": {"property": "Category", "select": {"equals": "Revenue"}}
+    },
+    {
+      "name": "Behind Target",
+      "type": "table",
+      "filter": {"property": "Status", "formula": {"contains": "🔴"}}
+    },
+    {
+      "name": "By Category",
+      "type": "board",
+      "group_by": "Category"
+    }
+  ]
+}

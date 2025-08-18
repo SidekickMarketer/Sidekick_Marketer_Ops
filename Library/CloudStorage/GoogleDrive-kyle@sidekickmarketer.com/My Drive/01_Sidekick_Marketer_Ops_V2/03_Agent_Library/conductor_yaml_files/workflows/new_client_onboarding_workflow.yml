@@ -1,0 +1,251 @@
+workflow:
+  name: "new_client_onboarding"
+  description: "Complete client onboarding from discovery to portal activation"
+  version: "1.0"
+  category: "client_lifecycle"
+
+metadata:
+  created_by: "Sidekick Marketer"
+  last_updated: "2025-08-18"
+  estimated_duration: "4-8 hours"
+  automation_level: "90%"
+
+triggers:
+  - type: "webhook"
+    source: "make.com"
+    endpoint: "/workflows/new_client_onboarding"
+    condition: "discovery_call_completed"
+  - type: "manual"
+    source: "notion"
+    button: "Start Client Onboarding"
+
+input_parameters:
+  required:
+    - client_id
+    - client_name
+    - service_package
+    - discovery_data
+  optional:
+    - rush_timeline
+    - custom_requirements
+    - brand_assets
+
+stages:
+  # Stage 1: Discovery Analysis & Strategy
+  discovery_analysis:
+    name: "Discovery Analysis & Strategy Development"
+    agents:
+      - id: "discovery_synthesizer"
+        name: "Discovery_Synthesizer_Agent"
+        inputs:
+          call_transcript: "${input.discovery_data.transcript}"
+          meeting_notes: "${input.discovery_data.notes}"
+          research_data: "${input.discovery_data.research}"
+        outputs:
+          synthesis_report: "${discovery_synthesizer.outputs.analysis_document}"
+          strategic_recommendations: "${discovery_synthesizer.outputs.strategic_recommendations}"
+        timeout: 1800
+        retry_count: 2
+        
+      - id: "strategy_architect"
+        name: "010_Strategy_Architect"
+        depends_on: ["discovery_synthesizer"]
+        inputs:
+          discovery_notes: "${discovery_synthesizer.outputs.synthesis_report}"
+          business_goals: "${input.discovery_data.goals}"
+          current_performance: "${input.discovery_data.baseline}"
+        outputs:
+          strategy_plan: "${strategy_architect.outputs.strategy}"
+          implementation_roadmap: "${strategy_architect.outputs.roadmap}"
+        timeout: 1200
+
+  # Stage 2: Proposal & Pricing
+  proposal_generation:
+    name: "Proposal Generation & Pricing"
+    agents:
+      - id: "dynamic_pricing"
+        name: "Dynamic_Pricing_Agent"
+        depends_on: ["strategy_architect"]
+        inputs:
+          client_value: "${strategy_architect.outputs.value_assessment}"
+          service_scope: "${input.service_package}"
+          market_position: "${discovery_synthesizer.outputs.competitive_analysis}"
+        outputs:
+          pricing_structure: "${dynamic_pricing.outputs.pricing}"
+          value_justification: "${dynamic_pricing.outputs.rationale}"
+        timeout: 300
+
+      - id: "proposal_builder"
+        name: "015_Proposal_Builder"
+        depends_on: ["dynamic_pricing", "strategy_architect"]
+        inputs:
+          strategy: "${strategy_architect.outputs.strategy_plan}"
+          pricing: "${dynamic_pricing.outputs.pricing_structure}"
+          client_info: "${input.client_data}"
+        outputs:
+          proposal_document: "${proposal_builder.outputs.proposal}"
+          executive_summary: "${proposal_builder.outputs.summary}"
+        timeout: 900
+
+  # Stage 3: Contract & SOW Generation
+  contract_preparation:
+    name: "Contract & Statement of Work"
+    condition: "proposal_accepted"
+    agents:
+      - id: "sow_generator"
+        name: "SOW_Generator_Agent"
+        triggers:
+          - condition: "proposal_status == 'accepted'"
+        inputs:
+          proposal_accepted: "${proposal_builder.outputs.proposal}"
+          service_selection: "${input.accepted_services}"
+          timeline: "${input.project_timeline}"
+        outputs:
+          sow_document: "${sow_generator.outputs.sow}"
+          deliverables_list: "${sow_generator.outputs.deliverables}"
+        timeout: 600
+
+  # Stage 4: Portal & Operations Setup
+  operations_setup:
+    name: "Client Portal & Operations Setup"
+    condition: "contract_signed"
+    parallel_execution: true
+    agents:
+      - id: "portal_builder"
+        name: "Notion_Portal_Builder_Agent"
+        inputs:
+          client_info: "${input.client_data}"
+          service_package: "${input.service_package}"
+          contract_details: "${sow_generator.outputs.sow}"
+        outputs:
+          portal_url: "${portal_builder.outputs.portal_url}"
+          portal_setup: "${portal_builder.outputs.setup_summary}"
+        timeout: 1200
+
+      - id: "access_credential"
+        name: "Access_Credential_Agent"
+        inputs:
+          client_info: "${input.client_data}"
+          required_accesses: "${input.service_package.integrations}"
+          security_level: "${input.client_data.security_requirements}"
+        outputs:
+          credential_summary: "${access_credential.outputs.credentials}"
+        timeout: 600
+
+      - id: "baseline_metrics"
+        name: "Baseline_Metrics_Agent"
+        inputs:
+          analytics_access: "${access_credential.outputs.analytics_access}"
+          historical_data: "${input.discovery_data.current_metrics}"
+          kpi_list: "${strategy_architect.outputs.success_metrics}"
+        outputs:
+          baseline_report: "${baseline_metrics.outputs.baseline}"
+        timeout: 900
+
+  # Stage 5: Task Planning & Quality Validation
+  planning_validation:
+    name: "Task Planning & Quality Validation"
+    agents:
+      - id: "task_mapper"
+        name: "014_665_Task_Mapper"
+        depends_on: ["sow_generator"]
+        inputs:
+          service_package: "${input.service_package}"
+          client_requirements: "${sow_generator.outputs.requirements}"
+          timeline: "${input.project_timeline}"
+        outputs:
+          task_assignments: "${task_mapper.outputs.tasks}"
+          execution_plan: "${task_mapper.outputs.plan}"
+        timeout: 600
+
+      - id: "task_prioritizer"
+        name: "Task_Prioritizer_Agent"
+        depends_on: ["task_mapper"]
+        inputs:
+          task_list: "${task_mapper.outputs.task_assignments}"
+          dependencies: "${task_mapper.outputs.dependencies}"
+          resources: "${input.resource_allocation}"
+          deadlines: "${input.project_timeline}"
+        outputs:
+          prioritized_tasks: "${task_prioritizer.outputs.priorities}"
+          execution_sequence: "${task_prioritizer.outputs.sequence}"
+        timeout: 300
+
+      - id: "quality_validator"
+        name: "Quality_Validator_Agent"
+        depends_on: ["portal_builder", "baseline_metrics", "task_prioritizer"]
+        inputs:
+          portal_setup: "${portal_builder.outputs.portal_setup}"
+          baseline_metrics: "${baseline_metrics.outputs.baseline}"
+          task_plan: "${task_prioritizer.outputs.prioritized_tasks}"
+        outputs:
+          quality_report: "${quality_validator.outputs.validation}"
+          issues_found: "${quality_validator.outputs.issues}"
+        timeout: 300
+
+# Final workflow outputs
+outputs:
+  client_portal_url: "${portal_builder.outputs.portal_url}"
+  onboarding_summary: 
+    type: "object"
+    properties:
+      discovery_analysis: "${discovery_synthesizer.outputs.synthesis_report}"
+      strategy_plan: "${strategy_architect.outputs.strategy_plan}"
+      sow_document: "${sow_generator.outputs.sow}"
+      portal_setup: "${portal_builder.outputs.setup_summary}"
+      baseline_metrics: "${baseline_metrics.outputs.baseline}"
+      task_plan: "${task_prioritizer.outputs.execution_sequence}"
+      quality_validation: "${quality_validator.outputs.validation}"
+  
+  next_workflow: "ongoing_client_management"
+
+# Error handling
+error_handling:
+  retry_policy:
+    max_retries: 3
+    backoff_factor: 2
+    
+  escalation:
+    conditions:
+      - "agent_failure_count > 2"
+      - "total_workflow_time > 8_hours"
+      - "quality_score < 7"
+    actions:
+      - "notify_human_operator"
+      - "pause_workflow"
+      - "create_incident_ticket"
+
+# Success criteria
+success_criteria:
+  - "all_agents_completed_successfully"
+  - "client_portal_functional"
+  - "baseline_metrics_captured"
+  - "task_plan_approved"
+  - "quality_score >= 8"
+
+# Notifications
+notifications:
+  on_start:
+    - "client_welcome_email"
+    - "internal_team_notification"
+  
+  on_completion:
+    - "client_portal_ready_notification"
+    - "team_handoff_summary"
+  
+  on_error:
+    - "escalation_alert"
+    - "client_status_update"
+
+# Performance metrics
+metrics:
+  track:
+    - "total_workflow_duration"
+    - "agent_success_rate"
+    - "client_satisfaction_score"
+    - "portal_setup_time"
+    - "quality_validation_score"
+  
+  report_to:
+    - "workflow_dashboard"
+    - "client_success_metrics"
