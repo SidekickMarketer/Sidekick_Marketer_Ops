@@ -140,20 +140,26 @@ EXPERTS = {
     "gary_vaynerchuk": {
         "name": "Gary Vaynerchuk",
         "specialty": "Social Media & Attention",
-        "core_philosophy": "Jab, jab, jab, right hook - give value before asking",
-        "key_framework": "Platform Native Content",
+        "core_philosophy": "Day Trading Attention - organic social is undervalued, interest-based algorithms reward quality over follower count",
+        "key_framework": "Day Trading Attention (2024)",
         "platform_rules": {
-            "instagram": "Visual-first, carousel storytelling, reels for reach",
-            "facebook": "Longer form, community engagement, groups",
-            "linkedin": "Professional insights, thought leadership, native video",
-            "tiktok": "Trend-first, authentic, hook in 1 second"
+            "instagram": "Carousels for education, strong hooks, save-worthy content beats follower count",
+            "facebook": "Underrated in 2024-25, longer form works, community engagement, groups",
+            "linkedin": "HUGE opportunity - demand outpaces supply, professional insights, thought leadership",
+            "tiktok": "Interest-based algorithm, hook in 1 second, authentic > polished"
         },
         "caption_rules": [
-            "Optimize first 3-5 words for the algorithm",
+            "First 3-5 words determine if algorithm shows it - make them count",
             "80% value, 20% ask (jab jab jab right hook)",
-            "Platform-native - don't cross-post blindly",
-            "Day trade attention - what's working NOW"
-        ]
+            "Document don't create - authenticity beats polish",
+            "Interest-based algorithms: Quality of content > number of followers",
+            "LinkedIn and Facebook are underrated opportunities in 2024-25"
+        ],
+        "algorithm_reality_2024": {
+            "old_model": "Follower count determined reach",
+            "new_model": "Content quality and engagement determine reach (TikTokification)",
+            "implication": "A post can go viral with 100 followers if content resonates"
+        }
     },
 
     "russell_brunson": {
@@ -267,6 +273,59 @@ PILLAR_EXPERT_EMPHASIS = {
 }
 
 # =============================================================================
+# 2024-2025 ALGORITHM REALITY
+# =============================================================================
+
+ALGORITHM_PRINCIPLES_2024 = {
+    "interest_based": {
+        "principle": "TikTokification of all platforms",
+        "explanation": "Algorithms now show content based on interest/engagement, not follower count",
+        "implication": "A great post from a small account can outperform a mediocre post from a big account"
+    },
+    "first_3_seconds": {
+        "principle": "Hook determines reach",
+        "explanation": "Algorithm measures if people stop scrolling - first line is everything",
+        "implication": "Weak hooks = algorithm buries the post, regardless of how good the rest is"
+    },
+    "save_share_over_likes": {
+        "principle": "Saves and shares signal value",
+        "explanation": "Algorithms weight saves/shares higher than likes - they indicate real value",
+        "implication": "Create content people want to reference later or share with others"
+    },
+    "platform_undervalued": {
+        "principle": "LinkedIn and Facebook are undervalued (2024-25)",
+        "explanation": "Everyone rushed to TikTok/Reels, leaving opportunity on LinkedIn and Facebook",
+        "implication": "Consider these platforms for B2B and local businesses especially"
+    }
+}
+
+# =============================================================================
+# STATIC IMAGE POST OPTIMIZATION (for non-video content)
+# =============================================================================
+
+STATIC_IMAGE_STRATEGY = {
+    "reality": "Most small businesses can't produce consistent video content - and that's okay",
+    "opportunity": "Strong captions + quality images can outperform mediocre video",
+    "principles": {
+        "caption_carries_weight": "Without video, the caption does ALL the storytelling work",
+        "image_stops_scroll": "Image gets attention, caption keeps it and drives action",
+        "carousel_power": "Carousels (multi-image) get higher engagement than single images on Instagram",
+        "save_worthy": "Educational carousels get saved - saves boost algorithm ranking"
+    },
+    "format_recommendations": {
+        "instagram": "Carousels with text overlays + strong caption = high saves",
+        "facebook": "Single image with longer storytelling caption works well",
+        "linkedin": "Document posts (PDF carousels) or single image + thought leadership caption"
+    },
+    "caption_must_do": [
+        "Tell the story the image can't tell",
+        "Create context and meaning for the visual",
+        "Include a clear next step (even if soft)",
+        "Be worth reading even without the image"
+    ]
+}
+
+# =============================================================================
 # QUALITY GATES
 # =============================================================================
 
@@ -294,6 +353,14 @@ QUALITY_GATES = {
     "platform_native": {
         "question": "Is this optimized for the specific platform?",
         "check": "Instagram carousel ≠ LinkedIn post ≠ TikTok caption"
+    },
+    "algorithm_first": {
+        "question": "Will the algorithm show this to people?",
+        "check": "First line must hook. Content must be save/share-worthy. Interest > follower count."
+    },
+    "static_image_strength": {
+        "question": "Does this caption carry the full story for a static post?",
+        "check": "Without video, caption must do ALL the work. Is it strong enough to stand alone?"
     }
 }
 
@@ -421,6 +488,29 @@ def get_awareness_guidance(target_audience: str) -> str:
 # MAIN PROMPT BUILDER
 # =============================================================================
 
+def build_algorithm_section() -> str:
+    """Build the 2024-25 algorithm reality section."""
+    lines = ["## 2024-2025 ALGORITHM REALITY (This is how social media works now)"]
+    for key, info in ALGORITHM_PRINCIPLES_2024.items():
+        lines.append(f"- **{info['principle']}**: {info['explanation']}")
+    return "\n".join(lines)
+
+
+def build_static_image_section() -> str:
+    """Build guidance for static image posts (non-video)."""
+    s = STATIC_IMAGE_STRATEGY
+    lines = [
+        "## STATIC IMAGE POST STRATEGY",
+        f"**Reality**: {s['reality']}",
+        f"**Opportunity**: {s['opportunity']}",
+        "",
+        "**Your caption must**:"
+    ]
+    for item in s["caption_must_do"]:
+        lines.append(f"- {item}")
+    return "\n".join(lines)
+
+
 def build_enhanced_caption_prompt(
     strategy: dict,
     previous_posts: list,
@@ -432,6 +522,11 @@ def build_enhanced_caption_prompt(
     """
     Build a caption generation prompt using selective expert frameworks.
     This is the key improvement - focused application, not everything at once.
+
+    Updated for 2024-2025:
+    - Interest-based algorithm awareness
+    - Static image optimization (most clients don't have video)
+    - Gary V's Day Trading Attention principles
     """
 
     # 1. Select the right experts for this client
@@ -447,13 +542,27 @@ def build_enhanced_caption_prompt(
     # 4. Build quality gates
     quality_gates = build_quality_gates_section()
 
-    # 5. Platform-specific rules
+    # 5. Build algorithm reality section (2024-25 update)
+    algorithm_section = build_algorithm_section()
+
+    # 6. Build static image strategy (since most clients don't have video)
+    static_image_section = build_static_image_section()
+
+    # 7. Platform-specific rules (updated for 2024)
     platform_rules = EXPERTS["gary_vaynerchuk"]["platform_rules"].get(
         platform.lower(),
         "Optimize for the platform's native format and algorithm"
     )
 
+    # Get platform-specific format recommendation
+    format_rec = STATIC_IMAGE_STRATEGY["format_recommendations"].get(
+        platform.lower(),
+        "Strong visual + caption that tells the full story"
+    )
+
     prompt = f"""You are an expert social media copywriter applying proven frameworks.
+
+**IMPORTANT CONTEXT**: These are captions for STATIC IMAGE posts (not video). The caption must carry the full storytelling weight.
 
 {expert_section}
 
@@ -477,11 +586,21 @@ def build_enhanced_caption_prompt(
 
 {platform_rules}
 
+**Best format for static posts on {platform}**: {format_rec}
+
 Character limits:
 - Instagram: 2,200 max (but first 125 chars shown in feed)
 - Facebook: Can be longer, but engagement drops after 80 chars preview
 - LinkedIn: 3,000 max, but hook must be in first 2 lines
 - TikTok: 150 max for captions
+
+---
+
+{algorithm_section}
+
+---
+
+{static_image_section}
 
 ---
 
@@ -510,13 +629,15 @@ Character limits:
 
 ## YOUR TASK
 
-Generate exactly {num_captions} captions that:
+Generate exactly {num_captions} captions for STATIC IMAGE posts that:
 
 1. **Pass all quality gates** above
 2. **Apply the expert frameworks** (not generic social media advice)
 3. **Match the awareness stage** of the target audience
 4. **Sound like the brand**, not like AI
 5. **Are platform-native** for {platform}
+6. **Work for the algorithm** (hook in first line, save/share-worthy content)
+7. **Carry the full story** since there's no video - the caption must do ALL the work
 
 ---
 
