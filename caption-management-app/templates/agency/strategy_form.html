@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Strategy - {{ client.name }} - Caption Manager{% endblock %}
+
+{% block body %}
+{% include "components/nav.html" %}
+
+<main class="max-w-3xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div class="mb-8">
+        <div class="flex items-center space-x-3">
+            <a href="/clients/{{ client.id }}" class="text-gray-400 hover:text-gray-600">&larr;</a>
+            <h1 class="text-2xl font-bold text-gray-900">{{ client.name }} - Strategy</h1>
+        </div>
+        <p class="mt-1 text-sm text-gray-500">Define the content strategy for AI-powered caption generation</p>
+    </div>
+
+    <form method="POST" action="/clients/{{ client.id }}/strategy" class="space-y-8">
+        <!-- Brand Voice -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Brand Voice</h2>
+
+            <div class="space-y-4">
+                <div>
+                    <label for="brand_voice" class="block text-sm font-medium text-gray-700 mb-2">Voice Description</label>
+                    <textarea name="brand_voice" id="brand_voice" rows="3"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., Professional but approachable. Uses conversational language. Occasionally witty, never sarcastic.">{{ strategy.brand_voice if strategy else '' }}</textarea>
+                </div>
+
+                <div>
+                    <label for="tone_keywords" class="block text-sm font-medium text-gray-700 mb-2">Tone Keywords</label>
+                    <input type="text" name="tone_keywords" id="tone_keywords"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., friendly, expert, conversational, empowering"
+                        value="{{ strategy.tone_keywords|join(', ') if strategy and strategy.tone_keywords else '' }}">
+                    <p class="mt-1 text-xs text-gray-500">Comma-separated keywords</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Strategy -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Content Strategy</h2>
+
+            <div class="space-y-4">
+                <div>
+                    <label for="content_pillars" class="block text-sm font-medium text-gray-700 mb-2">Content Pillars</label>
+                    <input type="text" name="content_pillars" id="content_pillars"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., education, behind-the-scenes, testimonials, tips, product features"
+                        value="{{ strategy.content_pillars|join(', ') if strategy and strategy.content_pillars else '' }}">
+                    <p class="mt-1 text-xs text-gray-500">Comma-separated content themes/pillars</p>
+                </div>
+
+                <div>
+                    <label for="key_messages" class="block text-sm font-medium text-gray-700 mb-2">Key Messages</label>
+                    <textarea name="key_messages" id="key_messages" rows="4"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Core messages to reinforce (one per line)">{{ strategy.key_messages|join('\n') if strategy and strategy.key_messages else '' }}</textarea>
+                    <p class="mt-1 text-xs text-gray-500">One message per line</p>
+                </div>
+
+                <div>
+                    <label for="unique_selling_points" class="block text-sm font-medium text-gray-700 mb-2">Unique Selling Points</label>
+                    <input type="text" name="unique_selling_points" id="unique_selling_points"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., 24/7 support, eco-friendly, family-owned since 1995"
+                        value="{{ strategy.unique_selling_points|join(', ') if strategy and strategy.unique_selling_points else '' }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Target Audience -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Target Audience</h2>
+
+            <div class="space-y-4">
+                <div>
+                    <label for="target_audience" class="block text-sm font-medium text-gray-700 mb-2">Audience Description</label>
+                    <textarea name="target_audience" id="target_audience" rows="3"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., Small business owners aged 30-50, primarily women, who want to grow their online presence but feel overwhelmed by marketing.">{{ strategy.target_audience if strategy else '' }}</textarea>
+                </div>
+
+                <div>
+                    <label for="audience_pain_points" class="block text-sm font-medium text-gray-700 mb-2">Pain Points</label>
+                    <input type="text" name="audience_pain_points" id="audience_pain_points"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., lack of time, confusing tech, inconsistent results"
+                        value="{{ strategy.audience_pain_points|join(', ') if strategy and strategy.audience_pain_points else '' }}">
+                </div>
+
+                <div>
+                    <label for="industry" class="block text-sm font-medium text-gray-700 mb-2">Industry</label>
+                    <select name="industry" id="industry"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="default" {{ 'selected' if not strategy or not strategy.industry or strategy.industry == 'default' else '' }}>General / Other</option>
+                        <option value="saas" {{ 'selected' if strategy and strategy.industry == 'saas' else '' }}>SaaS / Software</option>
+                        <option value="ecommerce" {{ 'selected' if strategy and strategy.industry == 'ecommerce' else '' }}>E-commerce / Retail</option>
+                        <option value="local_business" {{ 'selected' if strategy and strategy.industry == 'local_business' else '' }}>Local Business</option>
+                        <option value="professional_services" {{ 'selected' if strategy and strategy.industry == 'professional_services' else '' }}>Professional Services</option>
+                        <option value="health_wellness" {{ 'selected' if strategy and strategy.industry == 'health_wellness' else '' }}>Health & Wellness</option>
+                        <option value="real_estate" {{ 'selected' if strategy and strategy.industry == 'real_estate' else '' }}>Real Estate</option>
+                        <option value="coaching_consulting" {{ 'selected' if strategy and strategy.industry == 'coaching_consulting' else '' }}>Coaching / Consulting</option>
+                        <option value="restaurant_hospitality" {{ 'selected' if strategy and strategy.industry == 'restaurant_hospitality' else '' }}>Restaurant / Hospitality</option>
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">Industry determines which expert copywriting frameworks are applied</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platforms -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Platforms</h2>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {% set platforms_list = ['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter'] %}
+                {% for platform in platforms_list %}
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" name="platforms" value="{{ platform }}"
+                        class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        {{ 'checked' if strategy and strategy.platforms and platform in strategy.platforms else '' }}>
+                    <span class="text-sm text-gray-700 capitalize">{{ platform }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Hashtags -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Hashtags</h2>
+
+            <div class="space-y-4">
+                <div>
+                    <label for="primary_hashtags" class="block text-sm font-medium text-gray-700 mb-2">Primary Hashtags (Always Use)</label>
+                    <input type="text" name="primary_hashtags" id="primary_hashtags"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., #YourBrand, #YourSlogan"
+                        value="{{ strategy.hashtag_sets.primary|join(', ') if strategy and strategy.hashtag_sets and strategy.hashtag_sets.primary else '' }}">
+                </div>
+
+                <div>
+                    <label for="secondary_hashtags" class="block text-sm font-medium text-gray-700 mb-2">Secondary Hashtags (Rotate)</label>
+                    <input type="text" name="secondary_hashtags" id="secondary_hashtags"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., #SmallBusiness, #Marketing, #Growth"
+                        value="{{ strategy.hashtag_sets.secondary|join(', ') if strategy and strategy.hashtag_sets and strategy.hashtag_sets.secondary else '' }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Restrictions -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Restrictions</h2>
+
+            <div class="space-y-4">
+                <div>
+                    <label for="topics_to_avoid" class="block text-sm font-medium text-gray-700 mb-2">Topics to Avoid</label>
+                    <input type="text" name="topics_to_avoid" id="topics_to_avoid"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="e.g., politics, religion, controversial opinions"
+                        value="{{ strategy.topics_to_avoid|join(', ') if strategy and strategy.topics_to_avoid else '' }}">
+                </div>
+
+                <div>
+                    <label for="additional_notes" class="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
+                    <textarea name="additional_notes" id="additional_notes" rows="3"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Any other guidelines or context for content creation">{{ strategy.additional_notes if strategy else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex justify-end space-x-3">
+            <a href="/clients/{{ client.id }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">Cancel</a>
+            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
+                Save Strategy
+            </button>
+        </div>
+    </form>
+</main>
+{% endblock %}

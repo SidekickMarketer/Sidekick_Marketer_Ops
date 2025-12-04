@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Review Content - {{ client.name }}{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 py-6">
+            <h1 class="text-2xl font-bold text-gray-900">Content Review</h1>
+            <p class="mt-1 text-sm text-gray-500">{{ client.name }} &middot; {{ posts|length }} posts to review</p>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        {% if posts %}
+        <!-- Progress -->
+        <div class="mb-8 bg-white rounded-lg shadow p-4">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">Review Progress</span>
+                <span class="text-sm text-gray-500" id="progress-text">0 of {{ posts|length }} reviewed</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-green-500 h-2 rounded-full transition-all" id="progress-bar" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Posts -->
+        <div class="space-y-6" id="posts-container">
+            {% for post in posts %}
+            <div class="bg-white rounded-lg shadow overflow-hidden" data-post-id="{{ post.id }}" id="post-{{ post.id }}">
+                <div class="md:flex">
+                    <!-- Image -->
+                    <div class="md:w-1/3 bg-gray-100">
+                        {% if post.photo %}
+                        <img src="{{ post.photo.file_path }}" alt="" class="w-full h-64 md:h-full object-cover">
+                        {% else %}
+                        <div class="w-full h-64 md:h-full flex items-center justify-center">
+                            <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Content -->
+                    <div class="md:w-2/3 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700 capitalize">{{ post.platform }}</span>
+                                {% if post.scheduled_date %}
+                                <span class="text-xs text-gray-500">{{ post.scheduled_date.strftime('%b %d, %Y') }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="status-badge" id="status-{{ post.id }}">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">Pending Review</span>
+                            </div>
+                        </div>
+
+                        <!-- Caption -->
+                        <div class="mb-4">
+                            <p class="text-gray-900 whitespace-pre-line">{{ post.caption }}</p>
+                        </div>
+
+                        <!-- Hashtags -->
+                        {% if post.hashtags %}
+                        <div class="mb-6">
+                            <p class="text-sm text-indigo-600">{{ post.hashtags }}</p>
+                        </div>
+                        {% endif %}
+
+                        <!-- Actions -->
+                        <div class="flex items-center space-x-3 actions-{{ post.id }}">
+                            <button onclick="approvePost({{ post.id }})"
+                                class="flex-1 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                                Approve
+                            </button>
+                            <button onclick="showFeedbackForm({{ post.id }})"
+                                class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                                Request Changes
+                            </button>
+                        </div>
+
+                        <!-- Feedback Form (hidden by default) -->
+                        <div class="hidden mt-4" id="feedback-form-{{ post.id }}">
+                            <textarea id="feedback-text-{{ post.id }}" rows="3"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="What changes would you like? Be specific..."></textarea>
+                            <div class="mt-2 flex space-x-2">
+                                <button onclick="submitFeedback({{ post.id }})"
+                                    class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700">
+                                    Submit Feedback
+                                </button>
+                                <button onclick="hideFeedbackForm({{ post.id }})"
+                                    class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Approved State (hidden by default) -->
+                        <div class="hidden mt-4 text-center" id="approved-state-{{ post.id }}">
+                            <div class="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-lg">
+                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                                Approved
+                            </div>
+                        </div>
+
+                        <!-- Changes Requested State (hidden by default) -->
+                        <div class="hidden mt-4 text-center" id="changes-state-{{ post.id }}">
+                            <div class="inline-flex items-center px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg">
+                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                                Changes Requested
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- All Done -->
+        <div class="hidden mt-8 text-center" id="all-done">
+            <div class="bg-green-50 rounded-lg p-8">
+                <svg class="mx-auto h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <h3 class="mt-4 text-lg font-medium text-green-900">All Done!</h3>
+                <p class="mt-2 text-sm text-green-700">You've reviewed all the content. The team will be notified of any requested changes.</p>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- No posts to review -->
+        <div class="text-center py-12 bg-white rounded-lg shadow">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No content to review</h3>
+            <p class="mt-1 text-sm text-gray-500">You're all caught up! Check back later for new content.</p>
+        </div>
+        {% endif %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-4xl mx-auto px-4 py-8 text-center text-sm text-gray-500">
+        <p>Powered by Sidekick Marketer</p>
+    </footer>
+</div>
+
+<script>
+let reviewedCount = 0;
+const totalPosts = {{ posts|length }};
+
+function updateProgress() {
+    const percentage = totalPosts > 0 ? (reviewedCount / totalPosts) * 100 : 0;
+    document.getElementById('progress-bar').style.width = percentage + '%';
+    document.getElementById('progress-text').textContent = reviewedCount + ' of ' + totalPosts + ' reviewed';
+
+    if (reviewedCount === totalPosts && totalPosts > 0) {
+        document.getElementById('all-done').classList.remove('hidden');
+    }
+}
+
+async function approvePost(postId) {
+    try {
+        const response = await fetch('/review/{{ client.review_token }}/posts/' + postId + '/approve', {
+            method: 'POST'
+        });
+
+        if (response.ok) {
+            // Hide actions, show approved state
+            document.querySelector('.actions-' + postId).classList.add('hidden');
+            document.getElementById('feedback-form-' + postId).classList.add('hidden');
+            document.getElementById('approved-state-' + postId).classList.remove('hidden');
+
+            // Update status badge
+            document.getElementById('status-' + postId).innerHTML =
+                '<span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Approved</span>';
+
+            reviewedCount++;
+            updateProgress();
+        } else {
+            alert('Failed to approve. Please try again.');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+function showFeedbackForm(postId) {
+    document.getElementById('feedback-form-' + postId).classList.remove('hidden');
+}
+
+function hideFeedbackForm(postId) {
+    document.getElementById('feedback-form-' + postId).classList.add('hidden');
+}
+
+async function submitFeedback(postId) {
+    const comment = document.getElementById('feedback-text-' + postId).value;
+
+    if (!comment.trim()) {
+        alert('Please provide feedback on what changes you\'d like.');
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('comment', comment);
+
+        const response = await fetch('/review/{{ client.review_token }}/posts/' + postId + '/request-changes', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            // Hide actions, show changes requested state
+            document.querySelector('.actions-' + postId).classList.add('hidden');
+            document.getElementById('feedback-form-' + postId).classList.add('hidden');
+            document.getElementById('changes-state-' + postId).classList.remove('hidden');
+
+            // Update status badge
+            document.getElementById('status-' + postId).innerHTML =
+                '<span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">Changes Requested</span>';
+
+            reviewedCount++;
+            updateProgress();
+        } else {
+            alert('Failed to submit feedback. Please try again.');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+</script>
+{% endblock %}

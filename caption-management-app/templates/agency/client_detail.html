@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}{{ client.name }} - Caption Manager{% endblock %}
+
+{% block body %}
+{% include "components/nav.html" %}
+
+<main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8" x-data="{ showLinkModal: false }">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between mb-8">
+        <div>
+            <div class="flex items-center space-x-3">
+                <a href="/clients" class="text-gray-400 hover:text-gray-600">&larr;</a>
+                <h1 class="text-2xl font-bold text-gray-900">{{ client.name }}</h1>
+            </div>
+            <p class="mt-1 text-sm text-gray-500">
+                Client review link:
+                <code class="bg-gray-100 px-2 py-0.5 rounded text-xs">{{ request.url.scheme }}://{{ request.url.netloc }}/review/{{ client.review_token }}</code>
+            </p>
+        </div>
+        <div class="mt-4 md:mt-0 flex space-x-3">
+            <a href="/clients/{{ client.id }}/photos" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                Photos
+            </a>
+            <a href="/clients/{{ client.id }}/strategy" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                Edit Strategy
+            </a>
+            <a href="/clients/{{ client.id }}/generate" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
+                Generate Captions
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-lg shadow p-5">
+            <div class="text-sm font-medium text-gray-500">Total Posts</div>
+            <div class="mt-1 text-3xl font-semibold text-gray-900">{{ posts|length }}</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-5">
+            <div class="text-sm font-medium text-gray-500">Drafts</div>
+            <div class="mt-1 text-3xl font-semibold text-gray-600">
+                {{ posts|selectattr('status', 'equalto', 'draft')|list|length }}
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-5">
+            <div class="text-sm font-medium text-gray-500">Pending Review</div>
+            <div class="mt-1 text-3xl font-semibold text-yellow-600">
+                {{ posts|selectattr('status', 'equalto', 'client_review')|list|length }}
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-5">
+            <div class="text-sm font-medium text-gray-500">Metricool</div>
+            {% if client.metricool_blog_id %}
+            <div class="mt-1">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Linked
+                </span>
+            </div>
+            {% else %}
+            <div class="mt-1">
+                <button @click="showLinkModal = true" class="text-sm text-indigo-600 hover:text-indigo-900">
+                    Link Account &rarr;
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Strategy Summary -->
+    {% if client.strategy %}
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Strategy Overview</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="text-sm font-medium text-gray-500">Brand Voice</h3>
+                <p class="mt-1 text-sm text-gray-900">{{ client.strategy.brand_voice or 'Not set' }}</p>
+            </div>
+            <div>
+                <h3 class="text-sm font-medium text-gray-500">Content Pillars</h3>
+                <div class="mt-1 flex flex-wrap gap-1">
+                    {% if client.strategy.content_pillars %}
+                        {% for pillar in client.strategy.content_pillars %}
+                        <span class="px-2 py-0.5 text-xs rounded bg-indigo-100 text-indigo-700">{{ pillar }}</span>
+                        {% endfor %}
+                    {% else %}
+                    <span class="text-sm text-gray-400">Not set</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div>
+                <h3 class="text-sm font-medium text-gray-500">Target Audience</h3>
+                <p class="mt-1 text-sm text-gray-900">{{ client.strategy.target_audience or 'Not set' }}</p>
+            </div>
+            <div>
+                <h3 class="text-sm font-medium text-gray-500">Platforms</h3>
+                <div class="mt-1 flex flex-wrap gap-1">
+                    {% if client.strategy.platforms %}
+                        {% for platform in client.strategy.platforms %}
+                        <span class="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-700">{{ platform }}</span>
+                        {% endfor %}
+                    {% else %}
+                    <span class="text-sm text-gray-400">Not set</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Posts List -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-lg font-semibold text-gray-900">Posts</h2>
+            <div class="flex space-x-2">
+                <select class="text-sm border-gray-300 rounded-lg" onchange="filterPosts(this.value)">
+                    <option value="all">All Status</option>
+                    <option value="draft">Drafts</option>
+                    <option value="client_review">Pending Review</option>
+                    <option value="approved">Approved</option>
+                    <option value="scheduled">Scheduled</option>
+                </select>
+            </div>
+        </div>
+
+        {% if posts %}
+        <ul class="divide-y divide-gray-200">
+            {% for post in posts %}
+            <li class="hover:bg-gray-50">
+                <a href="/posts/{{ post.id }}" class="block px-6 py-4">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start space-x-4 flex-1 min-w-0">
+                            {% if post.photo %}
+                            <img src="{{ post.photo.file_path }}" class="w-16 h-16 object-cover rounded-lg" alt="">
+                            {% else %}
+                            <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            {% endif %}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-gray-900 line-clamp-2">{{ post.caption[:150] }}{% if post.caption|length > 150 %}...{% endif %}</p>
+                                <div class="mt-1 flex items-center space-x-2 text-xs text-gray-500">
+                                    <span class="px-1.5 py-0.5 rounded bg-gray-100">{{ post.platform }}</span>
+                                    {% if post.scheduled_date %}
+                                    <span>{{ post.scheduled_date.strftime('%b %d, %Y') }}</span>
+                                    {% endif %}
+                                    {% if post.batch_name %}
+                                    <span>&middot; {{ post.batch_name }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ml-4 flex-shrink-0">
+                            {% if post.status == 'draft' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">Draft</span>
+                            {% elif post.status == 'internal_review' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">Internal Review</span>
+                            {% elif post.status == 'client_review' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Client Review</span>
+                            {% elif post.status == 'revision_requested' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Changes Requested</span>
+                            {% elif post.status == 'approved' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Approved</span>
+                            {% elif post.status == 'scheduled' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Scheduled</span>
+                            {% elif post.status == 'posted' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-800">Posted</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="text-center py-12">
+            <p class="text-sm text-gray-500">No posts yet. Generate some captions to get started.</p>
+            <a href="/clients/{{ client.id }}/generate" class="mt-4 inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
+                Generate Captions
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Import Previous Posts -->
+    <div class="mt-8 bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Import Previous Posts</h2>
+        <p class="text-sm text-gray-500 mb-4">Upload a CSV of previous posts to help avoid duplicate content. CSV should have a "caption" column.</p>
+        <form method="POST" action="/clients/{{ client.id }}/import-previous" enctype="multipart/form-data" class="flex items-center space-x-4">
+            <input type="file" name="file" accept=".csv" class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+            <button type="submit" class="px-4 py-2 bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-700">
+                Import
+            </button>
+        </form>
+    </div>
+
+    <!-- Link Metricool Modal -->
+    <div x-show="showLinkModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex min-h-screen items-center justify-center p-4">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75" @click="showLinkModal = false"></div>
+            <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Link to Metricool</h3>
+                <form method="POST" action="/api/clients/{{ client.id }}/link-metricool">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Metricool Blog ID</label>
+                        <input type="text" name="blog_id" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="e.g., 12345">
+                        <p class="mt-1 text-xs text-gray-500">Find this in your Metricool URL: app.metricool.com/...?blogId=XXXXX</p>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" @click="showLinkModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">Link</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
