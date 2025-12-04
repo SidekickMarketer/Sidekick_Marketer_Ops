@@ -23,6 +23,7 @@ class Platform(str, enum.Enum):
     LINKEDIN = "linkedin"
     TIKTOK = "tiktok"
     TWITTER = "twitter"
+    GBP = "gbp"  # Google Business Profile
 
 
 class Client(Base):

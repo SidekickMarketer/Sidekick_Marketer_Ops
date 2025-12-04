@@ -100,7 +100,8 @@ async def schedule_post(
         "facebook": "FACEBOOK",
         "linkedin": "LINKEDIN",
         "tiktok": "TIKTOK",
-        "twitter": "TWITTER"
+        "twitter": "TWITTER",
+        "gbp": "GOOGLE_BUSINESS"
     }
 
     metricool_platform = platform_map.get(platform.lower(), platform.upper())
