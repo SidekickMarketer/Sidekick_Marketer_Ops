@@ -3,6 +3,12 @@ from anthropic import Anthropic
 from typing import Optional
 import json
 
+from .expert_frameworks import (
+    build_enhanced_caption_prompt,
+    get_experts_for_client,
+    INDUSTRY_EXPERT_MAPPING
+)
+
 client = None
 
 def get_anthropic_client():
@@ -14,83 +20,75 @@ def get_anthropic_client():
     return client
 
 
+def get_available_industries() -> list[str]:
+    """Return list of industries with mapped expert councils."""
+    return list(INDUSTRY_EXPERT_MAPPING.keys())
+
+
 def generate_captions(
     strategy: dict,
     previous_posts: list[str],
     num_captions: int = 5,
     platform: str = "instagram",
     content_theme: Optional[str] = None,
-    specific_topic: Optional[str] = None
+    specific_topic: Optional[str] = None,
+    use_expert_frameworks: bool = True
 ) -> list[dict]:
     """
     Generate captions based on client strategy, avoiding duplication with previous posts.
+
+    Uses selective expert frameworks (Schwartz, Ogilvy, Cialdini, etc.) based on
+    client industry to produce higher-quality, on-brand captions.
+
+    Args:
+        strategy: Client strategy dict with brand_voice, content_pillars, etc.
+        previous_posts: List of previous caption texts to avoid duplication
+        num_captions: Number of captions to generate
+        platform: Target platform (instagram, facebook, linkedin, tiktok)
+        content_theme: Optional content pillar to focus on
+        specific_topic: Optional specific topic to address
+        use_expert_frameworks: Whether to use the enhanced expert council system
     """
     anthropic = get_anthropic_client()
     if not anthropic:
         return [{"error": "Anthropic API key not configured"}]
 
-    # Build the prompt
-    prompt = f"""You are an expert social media copywriter for an agency. Generate {num_captions} unique social media captions for {platform}.
+    # Use the enhanced expert-driven prompt
+    if use_expert_frameworks:
+        prompt = build_enhanced_caption_prompt(
+            strategy=strategy,
+            previous_posts=previous_posts,
+            num_captions=num_captions,
+            platform=platform,
+            content_theme=content_theme,
+            specific_topic=specific_topic
+        )
+
+        # Log which experts are being used (helpful for debugging)
+        industry = strategy.get('industry', 'default')
+        experts = get_experts_for_client(industry, content_theme)
+        expert_names = [e['name'] for e in experts['primary']]
+        print(f"[Caption Generator] Using expert council: {', '.join(expert_names)} for {industry}")
+    else:
+        # Fallback to basic prompt (kept for backwards compatibility)
+        prompt = f"""You are an expert social media copywriter for an agency. Generate {num_captions} unique social media captions for {platform}.
 
 ## CLIENT STRATEGY
 
 **Brand Voice:** {strategy.get('brand_voice', 'Professional and friendly')}
-
 **Tone Keywords:** {', '.join(strategy.get('tone_keywords', ['professional', 'engaging']))}
-
 **Content Pillars:** {', '.join(strategy.get('content_pillars', ['education', 'engagement']))}
-
 **Target Audience:** {strategy.get('target_audience', 'General business audience')}
-
 **Key Messages to Reinforce:** {', '.join(strategy.get('key_messages', []))}
-
 **Industry:** {strategy.get('industry', 'General')}
-
 **Unique Selling Points:** {', '.join(strategy.get('unique_selling_points', []))}
 
-## PLATFORM GUIDELINES
-
-Platform: {platform}
-{"- Instagram: 2,200 character max, use line breaks, emoji-friendly, 20-30 hashtags work well" if platform == "instagram" else ""}
-{"- Facebook: Can be longer form, less hashtags (3-5), more conversational" if platform == "facebook" else ""}
-{"- LinkedIn: Professional tone, industry insights, minimal hashtags (3-5), thought leadership" if platform == "linkedin" else ""}
-{"- TikTok: Casual, trendy, hook in first line, relevant hashtags" if platform == "tiktok" else ""}
-
-## CONTENT DIRECTION
-{f"Theme/Pillar to focus on: {content_theme}" if content_theme else "Mix of content pillars"}
-{f"Specific topic to address: {specific_topic}" if specific_topic else ""}
-
-## PREVIOUS POSTS (DO NOT DUPLICATE OR BE TOO SIMILAR)
-{chr(10).join([f"- {post[:200]}..." if len(post) > 200 else f"- {post}" for post in previous_posts[-20:]]) if previous_posts else "No previous posts yet."}
-
-## TOPICS/PHRASES TO AVOID
-{', '.join(strategy.get('topics_to_avoid', [])) if strategy.get('topics_to_avoid') else 'None specified'}
+## PREVIOUS POSTS (DO NOT DUPLICATE)
+{chr(10).join([f"- {post[:200]}..." for post in previous_posts[-20:]]) if previous_posts else "No previous posts yet."}
 
 ## OUTPUT FORMAT
-
-Return a JSON array with exactly {num_captions} caption objects. Each object should have:
-- "caption": The main caption text (without hashtags)
-- "hashtags": Array of relevant hashtags (without # symbol)
-- "content_pillar": Which pillar this falls under
-- "hook": The opening line/hook
-- "cta": The call-to-action used
-- "reasoning": Brief explanation of why this caption works for the strategy
-
-Example format:
-```json
-[
-  {{
-    "caption": "The caption text here...",
-    "hashtags": ["marketing", "business", "growth"],
-    "content_pillar": "education",
-    "hook": "The opening hook",
-    "cta": "Save this for later!",
-    "reasoning": "This works because..."
-  }}
-]
-```
-
-Generate {num_captions} unique, on-brand captions now:"""
+Return a JSON array with {num_captions} caption objects with: caption, hashtags, content_pillar, hook, cta, reasoning.
+"""
 
     try:
         response = anthropic.messages.create(
