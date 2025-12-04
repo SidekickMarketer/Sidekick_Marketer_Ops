@@ -722,18 +722,24 @@ Which one are you guilty of? Drop a number below! 👇
     "gbp": {
         "name": "Google Business Profile",
         "structure": [
-            "[VALUE STATEMENT - What you offer/update]",
+            "[LOCAL KEYWORD + VALUE - Service/offer with city/area in first 80 chars]",
             "",
-            "[BRIEF CONTEXT - 1-2 sentences max]",
+            "[BRIEF CONTEXT - 1-2 sentences, include neighborhood or 'near me' phrasing]",
             "",
-            "[CTA - Specific action with urgency if appropriate]"
+            "[STRONG CTA - Call, Book, Visit, Get Directions with phone number]"
         ],
-        "example": """Spring lesson registration is now open! 🎵
+        "example": """Cincinnati piano lessons—Spring registration now open! 🎵
 
-New students can book a free 30-minute trial lesson to find the perfect instructor match.
+New students in Hyde Park, Oakley & Mt. Lookout can book a free 30-minute trial lesson to find the perfect instructor match.
 
-Call (513) XXX-XXXX or visit our website to reserve your spot—spaces fill quickly!""",
-        "notes": "GBP posts should be shorter, business-focused, NO hashtags"
+📞 Call (513) XXX-XXXX or tap 'Book' to reserve your spot—spaces fill quickly!""",
+        "notes": "CRITICAL: Front-load [Service] + [City] in first 80 chars. NO hashtags. Always include phone/CTA button. Use authentic photos only.",
+        "post_type_tips": {
+            "whats_new": "Best for keyword-rich service announcements",
+            "offer": "Include clear discount/deal, expiration creates urgency, stays visible 6 months",
+            "event": "Great for classes, workshops, seasonal events - 6 month visibility",
+            "product": "Showcase specific services with pricing if appropriate"
+        }
     }
 }
 
@@ -797,26 +803,56 @@ PLATFORM_BENCHMARKS = {
     },
     "gbp": {
         "caption_length": {
-            "optimal": "100-300 characters",
-            "max": "1,500 characters"
+            "optimal": "150-300 characters",
+            "truncation_point": "80 characters (critical info MUST be before this on desktop)",
+            "max": "1,500 characters",
+            "event_title_max": "58 characters"
         },
         "hashtags": {
-            "quantity": "NONE (not a social platform)"
+            "quantity": "NONE (not a social platform - hashtags look unprofessional)"
         },
-        "posting_frequency": "2-3x per week minimum",
+        "posting_frequency": "Weekly minimum, 2-3x per week ideal",
         "image_requirements": {
-            "resolution": "1080 x 1080 pixels",
-            "frequency": "3+ photos weekly"
+            "resolution": "1080 x 1080 pixels (square)",
+            "min_resolution": "720p",
+            "frequency": "3+ photos weekly",
+            "type": "Authentic, real photos only - NO stock images"
+        },
+        "video_requirements": {
+            "max_length": "30 seconds",
+            "max_size": "100 MB"
         },
         "impact": {
             "photos": "+42% direction requests, +35% website clicks",
-            "cta_buttons": "Always include (Call, Book, Learn More)"
+            "cta_buttons": "ALWAYS include (Call, Book, Learn More, Get Directions)",
+            "engagement_signals": "Calls, directions, website clicks, saves - all tracked by Google"
         },
-        "post_types": ["Update", "Offer", "Event", "Product"],
+        "post_types": ["What's New (best for keywords)", "Offer", "Event", "Product"],
+        "local_seo_keywords": {
+            "include": [
+                "City/neighborhood name",
+                "Service area terms",
+                "[Service] + [Location] combinations",
+                "Near me friendly phrases"
+            ],
+            "placement": "Front-load in first 80 characters"
+        },
+        "post_lifespan": {
+            "standard_posts": "7 days then less visible",
+            "offers_events": "6 months visibility",
+            "recommendation": "Post weekly to stay 'active' to Google"
+        },
+        "response_requirements": {
+            "reviews": "Respond to ALL reviews (positive AND negative) within 24 hours",
+            "messages": "Must respond within 24 hours or Google disables messaging",
+            "qa_section": "Seed with common questions proactively"
+        },
         "notes": [
-            "Front-load local SEO keywords",
-            "Respond to ALL reviews within 24 hours",
-            "Posts expire after 7 days (except offers/events)"
+            "2025: Story-style format rolling out - visual storytelling matters more",
+            "Posts increase CTR and engagement (indirect ranking factors)",
+            "Businesses with strong engagement outrank those with more reviews",
+            "Use 'What's New' posts for service/product keywords",
+            "Google AI now displays GBP content more prominently in local results"
         ]
     },
     "linkedin": {
