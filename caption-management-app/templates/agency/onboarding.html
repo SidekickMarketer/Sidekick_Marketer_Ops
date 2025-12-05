@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block title %}Onboarding - {{ client.name }} - Caption Manager{% endblock %}
+
+{% block body %}
+{% include "components/nav.html" %}
+
+<main class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8" x-data="onboardingWizard()">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Welcome! Let's set up {{ client.name }}</h1>
+                <p class="mt-1 text-sm text-gray-500">Upload your strategy documents and we'll extract the key information</p>
+            </div>
+            <form method="POST" action="/clients/{{ client.id }}/onboarding/skip">
+                <button type="submit" class="text-sm text-gray-500 hover:text-gray-700 underline">
+                    Skip setup &rarr;
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="mb-8">
+        <div class="flex items-center justify-center space-x-4">
+            <div class="flex items-center">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium"
+                    :class="currentStep >= 1 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'">
+                    1
+                </div>
+                <span class="ml-2 text-sm font-medium" :class="currentStep >= 1 ? 'text-indigo-600' : 'text-gray-500'">
+                    Upload Files
+                </span>
+            </div>
+            <div class="w-16 h-0.5" :class="currentStep >= 2 ? 'bg-indigo-600' : 'bg-gray-200'"></div>
+            <div class="flex items-center">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium"
+                    :class="currentStep >= 2 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'">
+                    2
+                </div>
+                <span class="ml-2 text-sm font-medium" :class="currentStep >= 2 ? 'text-indigo-600' : 'text-gray-500'">
+                    Review Strategy
+                </span>
+            </div>
+            <div class="w-16 h-0.5" :class="currentStep >= 3 ? 'bg-indigo-600' : 'bg-gray-200'"></div>
+            <div class="flex items-center">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium"
+                    :class="currentStep >= 3 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'">
+                    3
+                </div>
+                <span class="ml-2 text-sm font-medium" :class="currentStep >= 3 ? 'text-indigo-600' : 'text-gray-500'">
+                    Complete
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 1: Upload Strategy Files -->
+    <div x-show="currentStep === 1" class="space-y-6">
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">Upload Strategy Documents</h2>
+            <p class="text-sm text-gray-500 mb-6">
+                Upload any documents containing your client's brand strategy, voice guidelines, target audience info, etc.
+                We'll automatically extract and organize the information.
+            </p>
+
+            <!-- File Upload Area -->
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-indigo-400 transition-colors"
+                @dragover.prevent="dragOver = true"
+                @dragleave.prevent="dragOver = false"
+                @drop.prevent="handleDrop($event)"
+                :class="{ 'border-indigo-400 bg-indigo-50': dragOver }">
+
+                <input type="file" id="strategy-file" class="hidden" accept=".pdf,.doc,.docx,.txt"
+                    @change="uploadFile($event.target.files[0])">
+
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+
+                <div class="mt-4">
+                    <label for="strategy-file" class="cursor-pointer">
+                        <span class="text-indigo-600 font-medium hover:text-indigo-500">Upload files</span>
+                        <span class="text-gray-500"> or drag and drop</span>
+                    </label>
+                </div>
+                <p class="mt-1 text-xs text-gray-500">PDF, DOC, DOCX, or TXT up to 10MB</p>
+            </div>
+
+            <!-- Upload Progress -->
+            <div x-show="uploading" class="mt-4">
+                <div class="flex items-center space-x-3">
+                    <svg class="animate-spin h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="text-sm text-gray-600">Processing <span x-text="uploadingFile"></span>...</span>
+                </div>
+            </div>
+
+            <!-- Uploaded Files List -->
+            <div class="mt-6" x-show="files.length > 0">
+                <h3 class="text-sm font-medium text-gray-700 mb-3">Uploaded Files</h3>
+                <ul class="divide-y divide-gray-200 border rounded-lg">
+                    <template x-for="file in files" :key="file.id">
+                        <li class="flex items-center justify-between p-3">
+                            <div class="flex items-center space-x-3">
+                                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900" x-text="file.filename"></p>
+                                    <p class="text-xs text-gray-500" x-text="file.summary || 'Processed'"></p>
+                                </div>
+                            </div>
+                            <button @click="removeFile(file.id)" class="text-red-500 hover:text-red-700">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+
+            <!-- Extraction Results Preview -->
+            <div x-show="lastExtraction && !lastExtraction.error" class="mt-6 bg-green-50 rounded-lg p-4">
+                <h3 class="text-sm font-medium text-green-800 mb-2">Extracted from last upload:</h3>
+                <p class="text-sm text-green-700" x-text="lastExtraction?.summary || 'Strategy information extracted successfully'"></p>
+            </div>
+
+            <div x-show="lastExtraction?.error" class="mt-6 bg-red-50 rounded-lg p-4">
+                <h3 class="text-sm font-medium text-red-800 mb-2">Error processing file:</h3>
+                <p class="text-sm text-red-700" x-text="lastExtraction?.error"></p>
+            </div>
+        </div>
+
+        <div class="flex justify-between">
+            <div></div>
+            <button @click="currentStep = 2" class="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
+                Continue to Review &rarr;
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 2: Review & Edit Strategy -->
+    <div x-show="currentStep === 2" class="space-y-6">
+        <form method="POST" action="/clients/{{ client.id }}/onboarding/save-strategy">
+            <!-- Brand Voice -->
+            <div class="bg-white shadow rounded-lg p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Brand Voice</h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <label for="brand_voice" class="block text-sm font-medium text-gray-700 mb-2">Voice Description</label>
+                        <textarea name="brand_voice" id="brand_voice" rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="e.g., Professional but approachable. Uses conversational language.">{{ extracted_data.brand_voice or '' }}</textarea>
+                    </div>
+
+                    <div>
+                        <label for="tone_keywords" class="block text-sm font-medium text-gray-700 mb-2">Tone Keywords</label>
+                        <input type="text" name="tone_keywords" id="tone_keywords"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="e.g., friendly, expert, conversational"
+                            value="{{ extracted_data.tone_keywords|join(', ') if extracted_data.tone_keywords else '' }}">
+                        <p class="mt-1 text-xs text-gray-500">Comma-separated keywords</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Strategy -->
+            <div class="bg-white shadow rounded-lg p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Content Strategy</h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <label for="content_pillars" class="block text-sm font-medium text-gray-700 mb-2">Content Pillars</label>
+                        <input type="text" name="content_pillars" id="content_pillars"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="e.g., education, behind-the-scenes, testimonials, tips"
+                            value="{{ extracted_data.content_pillars|join(', ') if extracted_data.content_pillars else '' }}">
+                    </div>
+
+                    <div>
+                        <label for="key_messages" class="block text-sm font-medium text-gray-700 mb-2">Key Messages</label>
+                        <textarea name="key_messages" id="key_messages" rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Core messages to reinforce (one per line)">{{ extracted_data.key_messages|join('\n') if extracted_data.key_messages else '' }}</textarea>
+                    </div>
+
+                    <div>
+                        <label for="unique_selling_points" class="block text-sm font-medium text-gray-700 mb-2">Unique Selling Points</label>
+                        <input type="text" name="unique_selling_points" id="unique_selling_points"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="e.g., 24/7 support, eco-friendly, family-owned"
+                            value="{{ extracted_data.unique_selling_points|join(', ') if extracted_data.unique_selling_points else '' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Target Audience -->
+            <div class="bg-white shadow rounded-lg p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Target Audience</h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <label for="target_audience" class="block text-sm font-medium text-gray-700 mb-2">Audience Description</label>
+                        <textarea name="target_audience" id="target_audience" rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="e.g., Small business owners aged 30-50 who want to grow their online presence">{{ extracted_data.target_audience or '' }}</textarea>
+                    </div>
+
+                    <div>
+                        <label for="audience_pain_points" class="block text-sm font-medium text-gray-700 mb-2">Pain Points</label>
+                        <input type="text" name="audience_pain_points" id="audience_pain_points"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="e.g., lack of time, confusing tech, inconsistent results"
+                            value="{{ extracted_data.audience_pain_points|join(', ') if extracted_data.audience_pain_points else '' }}">
+                    </div>
+
+                    <div>
+                        <label for="industry" class="block text-sm font-medium text-gray-700 mb-2">Industry</label>
+                        <select name="industry" id="industry"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="default" {{ 'selected' if not extracted_data.industry or extracted_data.industry == 'default' else '' }}>General / Other</option>
+                            <option value="saas" {{ 'selected' if extracted_data.industry == 'saas' else '' }}>SaaS / Software</option>
+                            <option value="ecommerce" {{ 'selected' if extracted_data.industry == 'ecommerce' else '' }}>E-commerce / Retail</option>
+                            <option value="local_business" {{ 'selected' if extracted_data.industry == 'local_business' else '' }}>Local Business</option>
+                            <option value="professional_services" {{ 'selected' if extracted_data.industry == 'professional_services' else '' }}>Professional Services</option>
+                            <option value="health_wellness" {{ 'selected' if extracted_data.industry == 'health_wellness' else '' }}>Health & Wellness</option>
+                            <option value="real_estate" {{ 'selected' if extracted_data.industry == 'real_estate' else '' }}>Real Estate</option>
+                            <option value="coaching_consulting" {{ 'selected' if extracted_data.industry == 'coaching_consulting' else '' }}>Coaching / Consulting</option>
+                            <option value="restaurant_hospitality" {{ 'selected' if extracted_data.industry == 'restaurant_hospitality' else '' }}>Restaurant / Hospitality</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platforms -->
+            <div class="bg-white shadow rounded-lg p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Platforms</h2>
+                <p class="text-sm text-gray-500 mb-4">Select the platforms this client uses</p>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {% set platforms_list = ['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter', 'gbp'] %}
+                    {% for platform in platforms_list %}
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" name="platforms" value="{{ platform }}"
+                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            {{ 'checked' if extracted_data.platforms and platform in extracted_data.platforms else '' }}>
+                        <span class="text-sm text-gray-700 capitalize">{{ platform }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Hashtags -->
+            <div class="bg-white shadow rounded-lg p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Hashtags</h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <label for="primary_hashtags" class="block text-sm font-medium text-gray-700 mb-2">Primary Hashtags (Always Use)</label>
+                        <input type="text" name="primary_hashtags" id="primary_hashtags"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="e.g., #YourBrand, #YourSlogan"
+                            value="{{ extracted_data.hashtag_sets.primary|join(', ') if extracted_data.hashtag_sets and extracted_data.hashtag_sets.primary else '' }}">
+                    </div>
+
+                    <div>
+                        <label for="secondary_hashtags" class="block text-sm font-medium text-gray-700 mb-2">Secondary Hashtags (Rotate)</label>
+                        <input type="text" name="secondary_hashtags" id="secondary_hashtags"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="e.g., #SmallBusiness, #Marketing, #Growth"
+                            value="{{ extracted_data.hashtag_sets.secondary|join(', ') if extracted_data.hashtag_sets and extracted_data.hashtag_sets.secondary else '' }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Restrictions -->
+            <div class="bg-white shadow rounded-lg p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Restrictions</h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <label for="topics_to_avoid" class="block text-sm font-medium text-gray-700 mb-2">Topics to Avoid</label>
+                        <input type="text" name="topics_to_avoid" id="topics_to_avoid"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="e.g., politics, religion, controversial opinions"
+                            value="{{ extracted_data.topics_to_avoid|join(', ') if extracted_data.topics_to_avoid else '' }}">
+                    </div>
+
+                    <div>
+                        <label for="additional_notes" class="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
+                        <textarea name="additional_notes" id="additional_notes" rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            placeholder="Any other guidelines or context">{{ extracted_data.additional_notes if extracted_data.additional_notes else '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between">
+                <button type="button" @click="currentStep = 1" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                    &larr; Back
+                </button>
+                <button type="submit" class="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
+                    Save & Continue &rarr;
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Step 3: Complete (shown after save-strategy redirects back) -->
+    <div x-show="currentStep === 3 || {{ step }} >= 2" x-init="if({{ step }} >= 2) currentStep = 3" class="space-y-6">
+        <div class="bg-white shadow rounded-lg p-8 text-center">
+            <div class="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">Setup Complete!</h2>
+            <p class="text-gray-500 mb-6">{{ client.name }}'s strategy has been configured. You're ready to start generating captions.</p>
+
+            <div class="flex justify-center space-x-4">
+                <form method="POST" action="/clients/{{ client.id }}/onboarding/complete" class="inline">
+                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
+                        Go to Client Dashboard
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Optional: Upload more files or import previous posts -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Optional: Import Previous Posts</h3>
+            <p class="text-sm text-gray-500 mb-4">
+                Upload a CSV of previous posts to help avoid duplicate content when generating captions.
+            </p>
+            <form method="POST" action="/clients/{{ client.id }}/import-previous" enctype="multipart/form-data" class="flex items-center space-x-4">
+                <input type="file" name="file" accept=".csv" class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                <button type="submit" class="px-4 py-2 bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-700">
+                    Import
+                </button>
+            </form>
+        </div>
+    </div>
+</main>
+
+<script>
+function onboardingWizard() {
+    return {
+        currentStep: {{ step }},
+        dragOver: false,
+        uploading: false,
+        uploadingFile: '',
+        files: [
+            {% for file in strategy_files %}
+            {
+                id: {{ file.id }},
+                filename: "{{ file.original_filename }}",
+                summary: "{{ file.extracted_summary or 'Processed' }}"
+            },
+            {% endfor %}
+        ],
+        lastExtraction: null,
+
+        handleDrop(e) {
+            this.dragOver = false;
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                this.uploadFile(file);
+            }
+        },
+
+        async uploadFile(file) {
+            if (!file) return;
+
+            this.uploading = true;
+            this.uploadingFile = file.name;
+            this.lastExtraction = null;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/clients/{{ client.id }}/onboarding/upload-strategy', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.files.push({
+                        id: data.file_id,
+                        filename: data.filename,
+                        summary: data.extracted?.summary || 'Processed'
+                    });
+                    this.lastExtraction = data.extracted;
+
+                    // Reload page to get updated strategy data
+                    if (!data.extracted?.error) {
+                        window.location.reload();
+                    }
+                } else {
+                    this.lastExtraction = { error: data.error || 'Upload failed' };
+                }
+            } catch (error) {
+                this.lastExtraction = { error: 'Upload failed: ' + error.message };
+            } finally {
+                this.uploading = false;
+                this.uploadingFile = '';
+            }
+        },
+
+        async removeFile(fileId) {
+            try {
+                const response = await fetch(`/clients/{{ client.id }}/onboarding/files/${fileId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    this.files = this.files.filter(f => f.id !== fileId);
+                }
+            } catch (error) {
+                console.error('Failed to delete file:', error);
+            }
+        }
+    }
+}
+</script>
+{% endblock %}
