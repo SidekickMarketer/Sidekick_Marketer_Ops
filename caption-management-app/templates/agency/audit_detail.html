@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}{{ platform_name }} Audit - {{ client.name }} - Caption Manager{% endblock %}
+
+{% block body %}
+{% include "components/nav.html" %}
+
+<main class="max-w-3xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div class="mb-8">
+        <div class="flex items-center space-x-3">
+            <a href="/clients/{{ client.id }}/audits" class="text-gray-400 hover:text-gray-600">&larr;</a>
+            <h1 class="text-2xl font-bold text-gray-900">{{ platform_name }} Audit</h1>
+        </div>
+        <p class="mt-1 text-sm text-gray-500">{{ client.name }} - Profile Optimization Checklist</p>
+    </div>
+
+    <!-- Score Header -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900">Current Score</h2>
+                <p class="text-sm text-gray-500">
+                    {% if last_audited %}
+                    Last updated: {{ last_audited.strftime('%B %d, %Y at %I:%M %p') }}
+                    {% else %}
+                    Not yet audited
+                    {% endif %}
+                </p>
+            </div>
+            <div class="text-4xl font-bold
+                        {% if score >= 80 %}text-green-600{% elif score >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                {{ score }}%
+            </div>
+        </div>
+        <div class="mt-4 w-full bg-gray-200 rounded-full h-3">
+            <div class="h-3 rounded-full transition-all duration-500
+                        {% if score >= 80 %}bg-green-500{% elif score >= 50 %}bg-yellow-500{% else %}bg-red-500{% endif %}"
+                 style="width: {{ score }}%"></div>
+        </div>
+    </div>
+
+    <!-- Checklist Form -->
+    <form method="POST" action="/clients/{{ client.id }}/audits/{{ platform }}" class="space-y-4">
+        <div class="bg-white shadow rounded-lg divide-y divide-gray-200">
+            {% for item in items %}
+            <div class="p-4 hover:bg-gray-50 transition-colors">
+                <div class="flex items-start space-x-4">
+                    <!-- Checkbox -->
+                    <div class="flex-shrink-0 pt-1">
+                        <input type="checkbox"
+                               name="check_{{ item.key }}"
+                               id="check_{{ item.key }}"
+                               class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                               {{ 'checked' if item.checked else '' }}>
+                    </div>
+
+                    <!-- Label and Notes -->
+                    <div class="flex-grow">
+                        <label for="check_{{ item.key }}" class="block text-sm font-medium text-gray-900 cursor-pointer">
+                            {{ item.label }}
+                            {% if item.critical %}
+                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                Critical
+                            </span>
+                            {% endif %}
+                        </label>
+
+                        <!-- Notes input -->
+                        <div class="mt-2">
+                            <input type="text"
+                                   name="notes_{{ item.key }}"
+                                   placeholder="Add notes (optional)..."
+                                   value="{{ item.notes }}"
+                                   class="w-full text-sm px-3 py-1.5 border border-gray-200 rounded-md focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+
+                    <!-- Status indicator -->
+                    <div class="flex-shrink-0">
+                        {% if item.checked %}
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100">
+                            <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-between items-center pt-4">
+            <a href="/clients/{{ client.id }}/audits" class="text-sm text-gray-600 hover:text-gray-900">
+                &larr; Back to Audits
+            </a>
+            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
+                Save Audit
+            </button>
+        </div>
+    </form>
+
+    <!-- Platform Tips -->
+    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h4 class="text-sm font-semibold text-blue-800 mb-2">{{ platform_name }} Optimization Tips</h4>
+        {% if platform == 'gbp' %}
+        <ul class="text-sm text-blue-700 space-y-1">
+            <li>• Front-load your city/service area in the first 80 characters of descriptions</li>
+            <li>• Upload 3+ new photos every week for best engagement</li>
+            <li>• Respond to ALL reviews within 24 hours (Google tracks this)</li>
+            <li>• Use "What's New" posts for keyword-rich updates</li>
+            <li>• Seed your Q&A with common questions customers ask</li>
+        </ul>
+        {% elif platform == 'facebook' %}
+        <ul class="text-sm text-blue-700 space-y-1">
+            <li>• Your 155-character "About" intro shows in search results</li>
+            <li>• Configure the CTA button (Book Now, Call Now, etc.)</li>
+            <li>• Keep cover photo updated seasonally</li>
+            <li>• Complete all service/product listings</li>
+        </ul>
+        {% elif platform == 'instagram' %}
+        <ul class="text-sm text-blue-700 space-y-1">
+            <li>• Name field is searchable - add keywords (not just brand name)</li>
+            <li>• Bio should have clear value prop + CTA in 150 chars</li>
+            <li>• Use Highlights as a mini-website (Services, Testimonials, etc.)</li>
+            <li>• Enable all contact buttons for easy engagement</li>
+        </ul>
+        {% elif platform == 'linkedin' %}
+        <ul class="text-sm text-blue-700 space-y-1">
+            <li>• Tagline (120 chars) shows in search - make it keyword-rich</li>
+            <li>• Add all specialties for discoverability</li>
+            <li>• Keep "About" section updated with recent achievements</li>
+            <li>• Custom CTA button drives conversions</li>
+        </ul>
+        {% endif %}
+    </div>
+</main>
+
+<script>
+// Auto-save visual feedback
+document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        const row = this.closest('.p-4');
+        if (this.checked) {
+            row.classList.add('bg-green-50');
+            setTimeout(() => row.classList.remove('bg-green-50'), 500);
+        }
+    });
+});
+</script>
+{% endblock %}

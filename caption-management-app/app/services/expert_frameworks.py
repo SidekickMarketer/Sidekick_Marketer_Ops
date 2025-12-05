@@ -5,7 +5,15 @@ This module provides the expert frameworks from your existing system,
 applied selectively based on client industry and content type.
 
 Key principle: 3-4 experts max per generation, not all at once.
+
+Integrated with Sidekick Marketer skills:
+- Hook bank (50+ categorized hooks)
+- CTA bank (by goal type)
+- Caption templates (by pillar)
+- Platform benchmarks (2024-2025 research data)
 """
+
+from typing import Optional, List, Dict
 
 # =============================================================================
 # EXPERT DEFINITIONS
@@ -365,8 +373,643 @@ QUALITY_GATES = {
 }
 
 # =============================================================================
+# HOOK BANK (from Sidekick Skills)
+# =============================================================================
+
+HOOK_BANK = {
+    "question": {
+        "description": "Drive curiosity and engagement",
+        "best_for": ["education", "tips", "thought_leadership"],
+        "hooks": [
+            "What's the #1 mistake new {audience} make?",
+            "Why do most people fail at {topic}?",
+            "Did you know this about {topic}?",
+            "Ever wonder why {topic} is so hard?",
+            "What would you do if {scenario}?",
+            "Can you guess what happened next?",
+            "Ready for a hard truth about {topic}?"
+        ]
+    },
+    "statement": {
+        "description": "Bold claims that stop the scroll",
+        "best_for": ["thought_leadership", "promotion", "education"],
+        "hooks": [
+            "This changed everything for {subject}.",
+            "Most people get this completely wrong.",
+            "Here's what nobody tells you about {topic}.",
+            "The secret to {outcome} isn't what you think.",
+            "This is the post I wish I'd seen {timeframe} ago.",
+            "Unpopular opinion: {statement}.",
+            "Stop doing {action}. Here's why."
+        ]
+    },
+    "story": {
+        "description": "Draw readers into a narrative",
+        "best_for": ["testimonials", "behind_the_scenes", "student_success"],
+        "hooks": [
+            "3 months ago, {name} couldn't {action}.",
+            "I'll never forget the moment {event}.",
+            "When {name} first walked in, they {state}.",
+            "It started with a simple question: {question}.",
+            "Last week, something incredible happened.",
+            "{Name} almost gave up. Then {turning_point}.",
+            "The day everything clicked for {subject}."
+        ]
+    },
+    "number_list": {
+        "description": "Promise specific, scannable value",
+        "best_for": ["education", "tips", "product"],
+        "hooks": [
+            "5 mistakes that are {negative_outcome}.",
+            "3 ways to {positive_outcome} today.",
+            "The 4 things every {audience} needs to know.",
+            "7 signs you need {solution}.",
+            "1 simple trick that changes everything.",
+            "10 {items} that will {benefit}."
+        ]
+    },
+    "emotional": {
+        "description": "Connect through feeling",
+        "best_for": ["testimonials", "community", "behind_the_scenes"],
+        "hooks": [
+            "This moment made our whole week.",
+            "We're not crying, you're crying.",
+            "Pride doesn't even begin to describe it.",
+            "This is why we do what we do.",
+            "Grab the tissues for this one.",
+            "Best. Day. Ever."
+        ]
+    },
+    "pattern_interrupt": {
+        "description": "Break expectations",
+        "best_for": ["thought_leadership", "promotion", "entertainment"],
+        "hooks": [
+            "Forget everything you know about {topic}.",
+            "Plot twist: {unexpected_statement}.",
+            "Wait for it...",
+            "Okay, we need to talk about {topic}.",
+            "This isn't your typical {content_type} post.",
+            "Read this before you {common_action}."
+        ]
+    },
+    "urgency": {
+        "description": "Create immediate interest",
+        "best_for": ["promotion", "tips", "education"],
+        "hooks": [
+            "You're going to want to save this.",
+            "Don't scroll past this one.",
+            "This won't last long.",
+            "If you've been waiting for a sign, this is it.",
+            "Last chance to {action}."
+        ]
+    }
+}
+
+# Pillar to hook type mapping
+PILLAR_HOOK_MAPPING = {
+    "student_success": ["story", "emotional"],
+    "testimonials": ["story", "emotional"],
+    "education": ["question", "number_list"],
+    "tips": ["question", "number_list"],
+    "behind_the_scenes": ["story", "pattern_interrupt"],
+    "community": ["emotional", "statement"],
+    "promotion": ["urgency", "statement"],
+    "thought_leadership": ["statement", "pattern_interrupt"],
+    "entertainment": ["pattern_interrupt", "emotional"],
+    "product": ["number_list", "statement"]
+}
+
+# =============================================================================
+# CTA BANK (from Sidekick Skills)
+# =============================================================================
+
+CTA_BANK = {
+    "engagement": {
+        "description": "Drive comments and interaction",
+        "best_for": ["community", "behind_the_scenes", "entertainment"],
+        "ctas": [
+            "Drop a {emoji} if you agree!",
+            "Which one are you? Comment below!",
+            "Tag someone who needs to see this.",
+            "Tell us in the comments!",
+            "What's your experience with {topic}?",
+            "Agree or disagree? Let us know 👇",
+            "Can you relate?"
+        ]
+    },
+    "save": {
+        "description": "Boost algorithm with saves",
+        "best_for": ["education", "tips", "tutorials"],
+        "ctas": [
+            "Save this for later 📌",
+            "Bookmark this post!",
+            "Save this for your next {activity}.",
+            "You'll want to come back to this.",
+            "📌 Save and share with someone who needs it.",
+            "Keep this in your back pocket."
+        ]
+    },
+    "share": {
+        "description": "Expand reach through shares",
+        "best_for": ["testimonials", "tips", "emotional_content"],
+        "ctas": [
+            "Tag a friend who needs this!",
+            "Share this with someone starting {journey}.",
+            "Know someone who'd love this? Send it their way!",
+            "Share with your {person_type}.",
+            "Spread the word! 📣"
+        ]
+    },
+    "action": {
+        "description": "Drive specific conversions",
+        "best_for": ["promotion", "product", "services"],
+        "ctas": [
+            "Link in bio to {action}!",
+            "DM us \"{keyword}\" to get started.",
+            "Click the link to learn more.",
+            "Book your {offering} today →",
+            "Tap the link in our bio!",
+            "Call us at {phone} to {action}."
+        ]
+    },
+    "soft": {
+        "description": "Gentle nudges without pressure",
+        "best_for": ["awareness", "brand_building", "sensitive_topics"],
+        "ctas": [
+            "Just something to think about.",
+            "Here if you need us!",
+            "Questions? We're always here.",
+            "Ready when you are.",
+            "No pressure, just possibilities."
+        ]
+    },
+    "question": {
+        "description": "Invite dialogue",
+        "best_for": ["community", "thought_leadership", "discussion"],
+        "ctas": [
+            "What do you think?",
+            "Have you tried this?",
+            "What's your favorite {item}?",
+            "How do you handle {situation}?",
+            "What would you add to this list?",
+            "Agree? Disagree? Tell us!"
+        ]
+    },
+    "carousel": {
+        "description": "For swipeable content",
+        "best_for": ["education", "tips", "tutorials"],
+        "ctas": [
+            "Swipe for more →",
+            "Don't stop at slide 1!",
+            "The best tip is on the last slide 👀",
+            "Keep swiping for {topic}.",
+            "Slide {number} is the game-changer."
+        ]
+    }
+}
+
+# Pillar to CTA type mapping
+PILLAR_CTA_MAPPING = {
+    "student_success": ["share", "engagement"],
+    "testimonials": ["share", "engagement"],
+    "education": ["save", "share"],
+    "tips": ["save", "carousel"],
+    "behind_the_scenes": ["engagement", "question"],
+    "community": ["engagement", "share"],
+    "promotion": ["action", "soft"],
+    "thought_leadership": ["question", "engagement"],
+    "entertainment": ["engagement", "share"],
+    "product": ["action", "save"]
+}
+
+# =============================================================================
+# CAPTION TEMPLATES (from Sidekick Skills)
+# =============================================================================
+
+CAPTION_TEMPLATES = {
+    "student_success": {
+        "name": "Student Success / Testimonial",
+        "structure": [
+            "[STUDENT NAME/DESCRIPTOR] just hit a major milestone. [EMOJI]",
+            "",
+            "[SPECIFIC ACHIEVEMENT - what they did, how long it took]",
+            "",
+            "[EMOTIONAL MOMENT - the reaction, the feeling]",
+            "",
+            "[CONNECTION TO AUDIENCE - this could be you]",
+            "",
+            "[CTA]"
+        ],
+        "example": """This moment changed everything for Marcus. 🎹
+
+After 3 months of consistent practice, he played his first complete song for his family. No mistakes. Just pure joy on everyone's faces.
+
+That's what we live for at Cincinnati Music Academy.
+
+Ready to create your own moment?
+Link in bio to book your first lesson →"""
+    },
+    "education": {
+        "name": "Educational / Tips",
+        "structure": [
+            "[PROBLEM or MYTH statement - what people get wrong]",
+            "",
+            "[THE TRUTH or SOLUTION - what actually works]",
+            "",
+            "[BRIEF EXPLANATION - why this matters]",
+            "",
+            "[ACTIONABLE ADVICE - what to do now]",
+            "",
+            "[CTA - save, try, share]"
+        ],
+        "example": """Most beginners make this mistake without even knowing it. 🎸
+
+They practice the same thing over and over—but never actually improve.
+
+Here's why: repetition without intention doesn't build skill. You need focused practice with specific goals.
+
+Try this instead: Set a 3-minute timer. Focus on ONE section. Rest. Repeat.
+
+Save this for your next practice session 📌"""
+    },
+    "behind_the_scenes": {
+        "name": "Behind-the-Scenes / Team",
+        "structure": [
+            "[PEEK BEHIND THE CURTAIN - what you're showing]",
+            "",
+            "[STORY or CONTEXT - why this matters]",
+            "",
+            "[HUMAN ELEMENT - personality, authenticity]",
+            "",
+            "[CONNECTION - relate to audience]",
+            "",
+            "[CTA - engage, ask, comment]"
+        ],
+        "example": """Ever wonder what happens before lessons start? ☕
+
+Our instructors arrive 30 minutes early every day. Not because they have to—because they love preparing for their students.
+
+That's Sarah reviewing her lesson plans and sipping her third coffee of the day (don't judge 😅).
+
+What does your morning prep look like? Tell us below! 👇"""
+    },
+    "community": {
+        "name": "Community / Local",
+        "structure": [
+            "[LOCAL REFERENCE or COMMUNITY MOMENT]",
+            "",
+            "[WHY THIS MATTERS - connection to your business]",
+            "",
+            "[APPRECIATION - gratitude, acknowledgment]",
+            "",
+            "[ENGAGEMENT PROMPT - question, tag request]"
+        ],
+        "example": """Cincinnati, we love you! ❤️
+
+This weekend we got to perform at Fountain Square for the Summer Music Festival. Seeing our students on that stage, in front of their hometown—incredible.
+
+Thank you to everyone who came out to support. Our community makes everything we do possible.
+
+Were you there? Drop a 🎵 if you caught the show!"""
+    },
+    "promotion": {
+        "name": "Promotional / CTA",
+        "structure": [
+            "[VALUE HOOK - lead with benefit, not feature]",
+            "",
+            "[THE OFFER - what's available]",
+            "",
+            "[SOCIAL PROOF - quick credibility]",
+            "",
+            "[URGENCY if appropriate - limited time/spots]",
+            "",
+            "[CLEAR CTA - specific next step]"
+        ],
+        "example": """Your child's musical journey starts here. 🎶
+
+Spring registration is NOW OPEN for piano, guitar, voice, and drums.
+
+Join 200+ families who've already discovered what makes our lessons different: patient instructors, flexible scheduling, and real results.
+
+Early bird pricing ends Friday—only 8 spots left for new students!
+
+👉 Link in bio to reserve your spot"""
+    },
+    "carousel": {
+        "name": "Carousel / Multi-slide",
+        "structure": [
+            "[HOOK - curiosity-driving, swipe-inviting opening]",
+            "",
+            "[CONTEXT - why this matters, sets up slides]",
+            "",
+            "[CTA - Save/Share emphasis]"
+        ],
+        "slide_structure": [
+            "📍 Slide 1: [Hook visual + text]",
+            "📍 Slides 2-X: [Content breakdown]",
+            "📍 Final Slide: [CTA + summary]"
+        ],
+        "example": """5 practice mistakes that are slowing you down ⬇️
+
+We see these with students every single week. The good news? They're all fixable once you know what to look for.
+
+Swipe through to see if you're making any of these—and the simple fixes that make a huge difference.
+
+Which one are you guilty of? Drop a number below! 👇
+
+📌 Save this post for your next practice session"""
+    },
+    "gbp": {
+        "name": "Google Business Profile",
+        "structure": [
+            "[LOCAL KEYWORD + VALUE - Service/offer with city/area in first 80 chars]",
+            "",
+            "[BRIEF CONTEXT - 1-2 sentences, include neighborhood or 'near me' phrasing]",
+            "",
+            "[STRONG CTA - Call, Book, Visit, Get Directions with phone number]"
+        ],
+        "example": """Cincinnati piano lessons—Spring registration now open! 🎵
+
+New students in Hyde Park, Oakley & Mt. Lookout can book a free 30-minute trial lesson to find the perfect instructor match.
+
+📞 Call (513) XXX-XXXX or tap 'Book' to reserve your spot—spaces fill quickly!""",
+        "notes": "CRITICAL: Front-load [Service] + [City] in first 80 chars. NO hashtags. Always include phone/CTA button. Use authentic photos only.",
+        "post_type_tips": {
+            "whats_new": "Best for keyword-rich service announcements",
+            "offer": "Include clear discount/deal, expiration creates urgency, stays visible 6 months",
+            "event": "Great for classes, workshops, seasonal events - 6 month visibility",
+            "product": "Showcase specific services with pricing if appropriate"
+        }
+    }
+}
+
+# =============================================================================
+# PLATFORM BENCHMARKS (from Sidekick Skills - 2024-2025 data)
+# =============================================================================
+
+PLATFORM_BENCHMARKS = {
+    "instagram": {
+        "engagement_rates": {
+            "education": "4.2% - 4.52%",
+            "all_industries": "0.55% - 1.5%",
+            "healthcare": "3.89%"
+        },
+        "caption_length": {
+            "optimal": "125-150 characters",
+            "carousels": "300-500 characters acceptable",
+            "max": "2,200 characters",
+            "truncation_point": "125 characters (hook must be before this)"
+        },
+        "hashtags": {
+            "quantity": "5-10 (not 30)",
+            "mix": "1 broad + 2-3 niche + 1-2 branded + 1-2 local"
+        },
+        "format_performance": {
+            "carousels": "+22-38% higher engagement than single images",
+            "reels": "6.92% engagement (highest reach)",
+            "single_images": "Declining performance"
+        },
+        "optimal_slides": "8-10 slides perform best (or keep it short at 3)",
+        "best_times": {
+            "best_days": ["Tuesday", "Wednesday", "Thursday"],
+            "best_hours": "6-8 AM or 4-6 PM",
+            "worst_day": "Saturday"
+        },
+        "posting_frequency": "4-5x per week"
+    },
+    "facebook": {
+        "engagement_rates": {
+            "all_industries": "0.5% - 1%",
+            "healthcare": "2.22%"
+        },
+        "caption_length": {
+            "optimal": "40-80 characters (66% higher engagement)",
+            "note": "Shorter is dramatically better",
+            "max": "63,206 characters (avoid)"
+        },
+        "hashtags": {
+            "quantity": "1-3 only"
+        },
+        "best_times": {
+            "best_days": ["Wednesday", "Sunday", "Thursday"],
+            "best_hours": "1-3 PM (especially 2 PM)"
+        },
+        "posting_frequency": "3-4x per week",
+        "notes": [
+            "Links are clickable in captions",
+            "Questions drive comments",
+            "Less posting = higher engagement"
+        ]
+    },
+    "gbp": {
+        "caption_length": {
+            "optimal": "150-300 characters",
+            "truncation_point": "80 characters (critical info MUST be before this on desktop)",
+            "max": "1,500 characters",
+            "event_title_max": "58 characters"
+        },
+        "hashtags": {
+            "quantity": "NONE (not a social platform - hashtags look unprofessional)"
+        },
+        "posting_frequency": "Weekly minimum, 2-3x per week ideal",
+        "image_requirements": {
+            "resolution": "1080 x 1080 pixels (square)",
+            "min_resolution": "720p",
+            "frequency": "3+ photos weekly",
+            "type": "Authentic, real photos only - NO stock images"
+        },
+        "video_requirements": {
+            "max_length": "30 seconds",
+            "max_size": "100 MB"
+        },
+        "impact": {
+            "photos": "+42% direction requests, +35% website clicks",
+            "cta_buttons": "ALWAYS include (Call, Book, Learn More, Get Directions)",
+            "engagement_signals": "Calls, directions, website clicks, saves - all tracked by Google"
+        },
+        "post_types": ["What's New (best for keywords)", "Offer", "Event", "Product"],
+        "local_seo_keywords": {
+            "include": [
+                "City/neighborhood name",
+                "Service area terms",
+                "[Service] + [Location] combinations",
+                "Near me friendly phrases"
+            ],
+            "placement": "Front-load in first 80 characters"
+        },
+        "post_lifespan": {
+            "standard_posts": "7 days then less visible",
+            "offers_events": "6 months visibility",
+            "recommendation": "Post weekly to stay 'active' to Google"
+        },
+        "response_requirements": {
+            "reviews": "Respond to ALL reviews (positive AND negative) within 24 hours",
+            "messages": "Must respond within 24 hours or Google disables messaging",
+            "qa_section": "Seed with common questions proactively"
+        },
+        "notes": [
+            "2025: Story-style format rolling out - visual storytelling matters more",
+            "Posts increase CTR and engagement (indirect ranking factors)",
+            "Businesses with strong engagement outrank those with more reviews",
+            "Use 'What's New' posts for service/product keywords",
+            "Google AI now displays GBP content more prominently in local results"
+        ]
+    },
+    "linkedin": {
+        "caption_length": {
+            "optimal": "First 2 lines must hook",
+            "max": "3,000 characters"
+        },
+        "notes": [
+            "HUGE opportunity in 2024-25",
+            "Demand outpaces supply",
+            "Document posts (PDF carousels) perform well",
+            "Thought leadership + professional insights"
+        ]
+    }
+}
+
+# =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
+
+def get_hooks_for_pillar(pillar: str) -> dict:
+    """Get recommended hooks for a content pillar."""
+    pillar_key = pillar.lower().replace(" ", "_").replace("-", "_")
+    hook_types = PILLAR_HOOK_MAPPING.get(pillar_key, ["question", "statement"])
+
+    hooks = {}
+    for hook_type in hook_types:
+        if hook_type in HOOK_BANK:
+            hooks[hook_type] = HOOK_BANK[hook_type]
+
+    return hooks
+
+
+def get_ctas_for_pillar(pillar: str) -> dict:
+    """Get recommended CTAs for a content pillar."""
+    pillar_key = pillar.lower().replace(" ", "_").replace("-", "_")
+    cta_types = PILLAR_CTA_MAPPING.get(pillar_key, ["engagement", "save"])
+
+    ctas = {}
+    for cta_type in cta_types:
+        if cta_type in CTA_BANK:
+            ctas[cta_type] = CTA_BANK[cta_type]
+
+    return ctas
+
+
+def get_template_for_pillar(pillar: str) -> dict:
+    """Get caption template for a content pillar."""
+    pillar_key = pillar.lower().replace(" ", "_").replace("-", "_")
+    return CAPTION_TEMPLATES.get(pillar_key, CAPTION_TEMPLATES.get("education"))
+
+
+def get_platform_specs(platform: str) -> dict:
+    """Get platform-specific benchmarks and specs."""
+    return PLATFORM_BENCHMARKS.get(platform.lower(), PLATFORM_BENCHMARKS.get("instagram"))
+
+
+def build_hooks_section(pillar: str) -> str:
+    """Build the hooks section for the prompt."""
+    hooks = get_hooks_for_pillar(pillar)
+    if not hooks:
+        return ""
+
+    lines = [f"## RECOMMENDED HOOKS (for {pillar} content)"]
+    lines.append("Choose ONE hook style and adapt it to your topic:\n")
+
+    for hook_type, hook_data in hooks.items():
+        lines.append(f"**{hook_type.replace('_', ' ').title()}** - {hook_data['description']}")
+        for hook in hook_data['hooks'][:4]:  # Show top 4 examples
+            lines.append(f"  - \"{hook}\"")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def build_cta_section(pillar: str) -> str:
+    """Build the CTA section for the prompt."""
+    ctas = get_ctas_for_pillar(pillar)
+    if not ctas:
+        return ""
+
+    lines = [f"## RECOMMENDED CTAs (for {pillar} content)"]
+    lines.append("Choose ONE CTA style:\n")
+
+    for cta_type, cta_data in ctas.items():
+        lines.append(f"**{cta_type.replace('_', ' ').title()}** - {cta_data['description']}")
+        for cta in cta_data['ctas'][:3]:  # Show top 3 examples
+            lines.append(f"  - \"{cta}\"")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def build_template_section(pillar: str) -> str:
+    """Build the caption template section for the prompt."""
+    template = get_template_for_pillar(pillar)
+    if not template:
+        return ""
+
+    lines = [f"## CAPTION TEMPLATE (for {template['name']})"]
+    lines.append("Follow this structure:\n")
+    lines.append("```")
+    lines.extend(template['structure'])
+    lines.append("```\n")
+    lines.append("**Example:**")
+    lines.append(f"```\n{template['example']}\n```")
+
+    return "\n".join(lines)
+
+
+def build_platform_specs_section(platform: str) -> str:
+    """Build platform-specific specs section for the prompt."""
+    specs = get_platform_specs(platform)
+    if not specs:
+        return ""
+
+    lines = [f"## PLATFORM SPECS: {platform.upper()} (2024-2025 Data)"]
+
+    # Caption length
+    if "caption_length" in specs:
+        cl = specs["caption_length"]
+        lines.append(f"\n**Caption Length:**")
+        lines.append(f"  - Optimal: {cl.get('optimal', 'N/A')}")
+        if "truncation_point" in cl:
+            lines.append(f"  - Truncation: {cl['truncation_point']}")
+
+    # Hashtags
+    if "hashtags" in specs:
+        ht = specs["hashtags"]
+        lines.append(f"\n**Hashtags:** {ht.get('quantity', 'N/A')}")
+        if "mix" in ht:
+            lines.append(f"  - Mix: {ht['mix']}")
+
+    # Best times
+    if "best_times" in specs:
+        bt = specs["best_times"]
+        lines.append(f"\n**Best Posting Times:**")
+        if "best_days" in bt:
+            lines.append(f"  - Days: {', '.join(bt['best_days'])}")
+        if "best_hours" in bt:
+            lines.append(f"  - Hours: {bt['best_hours']}")
+
+    # Format performance (Instagram)
+    if "format_performance" in specs:
+        fp = specs["format_performance"]
+        lines.append(f"\n**Format Performance:**")
+        for format_type, perf in fp.items():
+            lines.append(f"  - {format_type.replace('_', ' ').title()}: {perf}")
+
+    # Notes
+    if "notes" in specs:
+        lines.append(f"\n**Platform Notes:**")
+        for note in specs["notes"]:
+            lines.append(f"  - {note}")
+
+    return "\n".join(lines)
+
 
 def get_experts_for_client(industry: str, content_pillar: str = None) -> dict:
     """
@@ -527,6 +1170,12 @@ def build_enhanced_caption_prompt(
     - Interest-based algorithm awareness
     - Static image optimization (most clients don't have video)
     - Gary V's Day Trading Attention principles
+
+    Integrated with Sidekick Skills:
+    - Hook bank with pillar-specific recommendations
+    - CTA bank with goal-specific options
+    - Caption templates with proven structures
+    - Platform benchmarks with 2024-2025 data
     """
 
     # 1. Select the right experts for this client
@@ -559,6 +1208,19 @@ def build_enhanced_caption_prompt(
         platform.lower(),
         "Strong visual + caption that tells the full story"
     )
+
+    # 8. NEW: Build hooks section based on content pillar
+    pillar = content_theme or "education"
+    hooks_section = build_hooks_section(pillar)
+
+    # 9. NEW: Build CTA section based on content pillar
+    cta_section = build_cta_section(pillar)
+
+    # 10. NEW: Build template section based on content pillar
+    template_section = build_template_section(pillar)
+
+    # 11. NEW: Build platform specs section with benchmarks
+    platform_specs_section = build_platform_specs_section(platform)
 
     prompt = f"""You are an expert social media copywriter applying proven frameworks.
 
@@ -604,6 +1266,22 @@ Character limits:
 
 ---
 
+{platform_specs_section}
+
+---
+
+{hooks_section}
+
+---
+
+{cta_section}
+
+---
+
+{template_section}
+
+---
+
 ## CONTENT DIRECTION
 
 {f"**Theme/Pillar**: {content_theme}" if content_theme else "**Theme**: Mix of content pillars"}
@@ -631,13 +1309,15 @@ Character limits:
 
 Generate exactly {num_captions} captions for STATIC IMAGE posts that:
 
-1. **Pass all quality gates** above
-2. **Apply the expert frameworks** (not generic social media advice)
-3. **Match the awareness stage** of the target audience
-4. **Sound like the brand**, not like AI
-5. **Are platform-native** for {platform}
-6. **Work for the algorithm** (hook in first line, save/share-worthy content)
-7. **Carry the full story** since there's no video - the caption must do ALL the work
+1. **Use a hook from the RECOMMENDED HOOKS section** - Adapt one to fit the topic
+2. **Follow the CAPTION TEMPLATE structure** - Don't reinvent, use what works
+3. **End with a CTA from the RECOMMENDED CTAs section** - Match to goal
+4. **Apply the expert frameworks** - Channel the named experts, not generic advice
+5. **Match the awareness stage** of the target audience
+6. **Sound like the brand**, not like AI
+7. **Are platform-native** for {platform} - Follow the platform specs above
+8. **Work for the algorithm** - Hook in first line, save/share-worthy content
+9. **Pass all quality gates** above
 
 ---
 
