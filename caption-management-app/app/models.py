@@ -59,6 +59,9 @@ class Client(Base):
     photos = relationship("Photo", back_populates="client", cascade="all, delete-orphan")
     profile_audits = relationship("ProfileAudit", back_populates="client", cascade="all, delete-orphan")
     strategy_files = relationship("StrategyFile", back_populates="client", cascade="all, delete-orphan")
+    # Full profile and platform strategies
+    client_profile = relationship("ClientProfile", back_populates="client", uselist=False, cascade="all, delete-orphan")
+    platform_strategies = relationship("PlatformStrategy", back_populates="client", cascade="all, delete-orphan")
 
 
 class Strategy(Base):
@@ -110,6 +113,11 @@ class Post(Base):
     caption = Column(Text, nullable=False)
     hashtags = Column(Text)
     platform = Column(String(50))  # instagram, facebook, etc.
+
+    # Original AI-generated content (for learning from edits)
+    original_caption = Column(Text, nullable=True)  # What AI generated
+    original_hashtags = Column(Text, nullable=True)  # Original hashtags
+    was_edited = Column(Boolean, default=False)  # Track if user modified it
 
     # Media
     photo_id = Column(Integer, ForeignKey("photos.id"), nullable=True)
@@ -259,6 +267,57 @@ class StrategyFile(Base):
 
     # Relationship
     client = relationship("Client", back_populates="strategy_files")
+
+
+class ClientProfile(Base):
+    """
+    Full markdown profile document for a client.
+    Stores the complete 00_CLIENT_PROFILE.md content for use in caption generation.
+    """
+    __tablename__ = "client_profiles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey("clients.id"), unique=True)
+
+    # Full markdown content
+    profile_markdown = Column(Text)  # Complete CLIENT_PROFILE.md content
+
+    # Master strategy (00_MASTER_STRATEGY.md)
+    master_strategy_markdown = Column(Text, nullable=True)
+
+    # Strategy brief (STRATEGY_BRIEF.md) - optional quick reference
+    strategy_brief_markdown = Column(Text, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship
+    client = relationship("Client", back_populates="client_profile")
+
+
+class PlatformStrategy(Base):
+    """
+    Platform-specific strategy documents.
+    Stores full markdown strategy for each platform (IG, FB, GBP, etc.)
+    """
+    __tablename__ = "platform_strategies"
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey("clients.id"))
+
+    # Platform identifier (instagram, facebook, gbp, linkedin, tiktok)
+    platform = Column(String(50), nullable=False)
+
+    # Full platform strategy markdown (e.g., 00_IG_STRATEGY.md)
+    strategy_markdown = Column(Text)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship
+    client = relationship("Client", back_populates="platform_strategies")
 
 
 # Define the audit checklists for each platform

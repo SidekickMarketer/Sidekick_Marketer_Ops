@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Client Profile - {{ client.name }} - Caption Manager{% endblock %}
+
+{% block body %}
+{% include "components/nav.html" %}
+
+<main class="max-w-6xl mx-auto py-10 px-4 sm:px-6 lg:px-8" x-data="profileEditor()">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <div class="flex items-center space-x-3 mb-2">
+                    <a href="/clients/{{ client.id }}" class="text-ink-400 hover:text-ink-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                    </a>
+                    <h1 class="font-display text-2xl font-semibold text-ink-900">Client Profile & Strategy</h1>
+                </div>
+                <p class="text-ink-500">{{ client.name }} · Upload or edit full markdown documents</p>
+            </div>
+            <a href="/clients/{{ client.id }}/strategies" class="px-4 py-2 text-sm font-medium text-ink-600 bg-white border border-cream-300 rounded-lg hover:bg-cream-50 transition-colors">
+                Platform Strategies →
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Banner -->
+    {% if profile and profile.profile_markdown %}
+    <div class="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center space-x-3">
+        <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+        </div>
+        <div>
+            <p class="text-sm font-semibold text-emerald-800">Full profile loaded</p>
+            <p class="text-xs text-emerald-600">Captions will use complete context ({{ (profile.profile_markdown|length / 1000)|round(1) }}KB of strategy data)</p>
+        </div>
+    </div>
+    {% else %}
+    <div class="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center space-x-3">
+        <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+        </div>
+        <div>
+            <p class="text-sm font-semibold text-amber-800">No full profile uploaded</p>
+            <p class="text-xs text-amber-600">Upload your CLIENT_PROFILE.md to enable rich caption generation</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tabs -->
+    <div class="mb-6 border-b border-cream-300">
+        <nav class="-mb-px flex space-x-8">
+            <button @click="activeTab = 'profile'" 
+                class="py-3 px-1 border-b-2 font-medium text-sm transition-colors"
+                :class="activeTab === 'profile' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-ink-500 hover:text-ink-700 hover:border-cream-300'">
+                Client Profile
+            </button>
+            <button @click="activeTab = 'master'" 
+                class="py-3 px-1 border-b-2 font-medium text-sm transition-colors"
+                :class="activeTab === 'master' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-ink-500 hover:text-ink-700 hover:border-cream-300'">
+                Master Strategy
+            </button>
+            <button @click="activeTab = 'brief'" 
+                class="py-3 px-1 border-b-2 font-medium text-sm transition-colors"
+                :class="activeTab === 'brief' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-ink-500 hover:text-ink-700 hover:border-cream-300'">
+                Strategy Brief
+            </button>
+        </nav>
+    </div>
+
+    <!-- Client Profile Tab -->
+    <div x-show="activeTab === 'profile'" x-transition class="space-y-6">
+        <div class="bg-white rounded-xl border border-cream-300 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="font-display text-lg font-semibold text-ink-900">Client Profile</h2>
+                    <p class="text-sm text-ink-500">00_CLIENT_PROFILE.md · Business info, audience, FAQs, services</p>
+                </div>
+                <label class="px-4 py-2 text-sm font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer">
+                    <input type="file" class="hidden" accept=".md,.markdown,.txt" @change="uploadFile($event, 'profile')">
+                    Upload .md
+                </label>
+            </div>
+
+            <form method="POST" action="/clients/{{ client.id }}/profile/upload">
+                <textarea name="profile_markdown" rows="25"
+                    class="w-full px-4 py-3 font-mono text-sm border border-cream-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none"
+                    placeholder="# Client Name - Client Profile&#10;&#10;Paste your full CLIENT_PROFILE.md content here...">{{ profile.profile_markdown if profile and profile.profile_markdown else '' }}</textarea>
+                
+                <div class="mt-4 flex justify-end">
+                    <button type="submit" class="px-5 py-2.5 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors btn-lift">
+                        Save Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Master Strategy Tab -->
+    <div x-show="activeTab === 'master'" x-transition class="space-y-6">
+        <div class="bg-white rounded-xl border border-cream-300 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="font-display text-lg font-semibold text-ink-900">Master Strategy</h2>
+                    <p class="text-sm text-ink-500">00_MASTER_STRATEGY.md · Content pillars, themes, voice, priorities</p>
+                </div>
+                <label class="px-4 py-2 text-sm font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer">
+                    <input type="file" class="hidden" accept=".md,.markdown,.txt" @change="uploadFile($event, 'master_strategy')">
+                    Upload .md
+                </label>
+            </div>
+
+            <form method="POST" action="/clients/{{ client.id }}/profile/upload">
+                <input type="hidden" name="profile_markdown" value="{{ profile.profile_markdown if profile and profile.profile_markdown else '' }}">
+                <textarea name="master_strategy_markdown" rows="25"
+                    class="w-full px-4 py-3 font-mono text-sm border border-cream-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none"
+                    placeholder="# Client Name - Master Social Media Strategy&#10;&#10;Paste your full 00_MASTER_STRATEGY.md content here...">{{ profile.master_strategy_markdown if profile and profile.master_strategy_markdown else '' }}</textarea>
+                
+                <div class="mt-4 flex justify-end">
+                    <button type="submit" class="px-5 py-2.5 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors btn-lift">
+                        Save Master Strategy
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Strategy Brief Tab -->
+    <div x-show="activeTab === 'brief'" x-transition class="space-y-6">
+        <div class="bg-white rounded-xl border border-cream-300 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="font-display text-lg font-semibold text-ink-900">Strategy Brief</h2>
+                    <p class="text-sm text-ink-500">STRATEGY_BRIEF.md · One-page executive summary</p>
+                </div>
+                <label class="px-4 py-2 text-sm font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer">
+                    <input type="file" class="hidden" accept=".md,.markdown,.txt" @change="uploadFile($event, 'strategy_brief')">
+                    Upload .md
+                </label>
+            </div>
+
+            <form method="POST" action="/clients/{{ client.id }}/profile/upload">
+                <input type="hidden" name="profile_markdown" value="{{ profile.profile_markdown if profile and profile.profile_markdown else '' }}">
+                <input type="hidden" name="master_strategy_markdown" value="{{ profile.master_strategy_markdown if profile and profile.master_strategy_markdown else '' }}">
+                <textarea name="strategy_brief_markdown" rows="20"
+                    class="w-full px-4 py-3 font-mono text-sm border border-cream-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none"
+                    placeholder="# Client Name - Strategy Brief&#10;&#10;Paste your STRATEGY_BRIEF.md content here...">{{ profile.strategy_brief_markdown if profile and profile.strategy_brief_markdown else '' }}</textarea>
+                
+                <div class="mt-4 flex justify-end">
+                    <button type="submit" class="px-5 py-2.5 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors btn-lift">
+                        Save Strategy Brief
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div x-show="message" x-transition class="fixed bottom-4 right-4 px-4 py-3 rounded-xl shadow-elevated toast"
+        :class="messageError ? 'bg-red-50 text-red-800 border border-red-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'">
+        <span x-text="message"></span>
+    </div>
+</main>
+
+<script>
+function profileEditor() {
+    return {
+        activeTab: 'profile',
+        message: '',
+        messageError: false,
+
+        async uploadFile(event, docType) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('doc_type', docType);
+
+            try {
+                const response = await fetch('/clients/{{ client.id }}/profile/upload-file', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.message = `${file.name} uploaded successfully!`;
+                    this.messageError = false;
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    this.message = data.error || 'Upload failed';
+                    this.messageError = true;
+                }
+            } catch (error) {
+                this.message = 'Upload failed: ' + error.message;
+                this.messageError = true;
+            }
+
+            setTimeout(() => this.message = '', 3000);
+        }
+    }
+}
+</script>
+{% endblock %}

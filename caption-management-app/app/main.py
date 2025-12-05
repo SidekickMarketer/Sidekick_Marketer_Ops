@@ -8,13 +8,44 @@ import secrets
 import os
 import shutil
 from pathlib import Path
+import base64
 
 from .database import engine, get_db, Base
-from .models import Client, Strategy, Post, PreviousPost, Photo, Comment, Batch, PostStatus, ProfileAudit, AUDIT_CHECKLISTS, StrategyFile, OnboardingStatus
+from .models import Client, Strategy, Post, PreviousPost, Photo, Comment, Batch, PostStatus, ProfileAudit, AUDIT_CHECKLISTS, StrategyFile, OnboardingStatus, ClientProfile, PlatformStrategy
 from .services import caption_generator, metricool, strategy_parser
+from sqlalchemy import text
 
 # Create tables
 Base.metadata.create_all(bind=engine)
+
+# Run simple migrations for new columns (SQLite-safe)
+def run_migrations():
+    """Add new columns to existing tables if they don't exist"""
+    with engine.connect() as conn:
+        # Check and add new Post columns for learning system
+        try:
+            conn.execute(text("ALTER TABLE posts ADD COLUMN original_caption TEXT"))
+            print("[Migration] Added original_caption column to posts")
+        except Exception:
+            pass  # Column already exists
+        
+        try:
+            conn.execute(text("ALTER TABLE posts ADD COLUMN original_hashtags TEXT"))
+            print("[Migration] Added original_hashtags column to posts")
+        except Exception:
+            pass
+        
+        try:
+            conn.execute(text("ALTER TABLE posts ADD COLUMN was_edited BOOLEAN DEFAULT 0"))
+            print("[Migration] Added was_edited column to posts")
+        except Exception:
+            pass
+        
+        conn.commit()
+
+run_migrations()
+
+APP_PASSWORD = os.getenv("APP_PASSWORD", "").strip()
 
 app = FastAPI(title="Caption Management App")
 
@@ -26,6 +57,79 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 # Ensure upload directory exists
 UPLOAD_DIR = BASE_DIR / "static" / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+
+# ============================================================================
+# BASIC PASSWORD PROTECTION (Phase 1)
+# ============================================================================
+
+def _is_public_path(path: str) -> bool:
+    """Allow health, docs, static, review links without auth."""
+    return (
+        path.startswith("/static")
+        or path.startswith("/docs")
+        or path.startswith("/openapi.json")
+        or path.startswith("/redoc")
+        or path.startswith("/health")
+        or path.startswith("/review")
+        or path == "/login"
+    )
+
+
+@app.middleware("http")
+async def simple_password_guard(request, call_next):
+    # If no password configured, skip guard
+    if not APP_PASSWORD:
+        return await call_next(request)
+
+    if _is_public_path(request.url.path):
+        return await call_next(request)
+
+    # Cookie-based session
+    cookie_token = request.cookies.get("app_auth")
+    if cookie_token and secrets.compare_digest(cookie_token, APP_PASSWORD):
+        return await call_next(request)
+
+    # Basic auth support (Authorization: Basic base64(user:pass))
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.lower().startswith("basic "):
+        try:
+            decoded = base64.b64decode(auth_header.split(" ")[1]).decode("utf-8")
+            supplied_password = decoded.split(":", 1)[1] if ":" in decoded else ""
+            if secrets.compare_digest(supplied_password, APP_PASSWORD):
+                response = await call_next(request)
+                response.set_cookie("app_auth", APP_PASSWORD, httponly=True, samesite="lax")
+                return response
+        except Exception:
+            pass
+
+    # Redirect to login page
+    return RedirectResponse("/login", status_code=303)
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request, "has_password": bool(APP_PASSWORD)})
+
+
+@app.post("/login")
+async def login_submit(request: Request):
+    if not APP_PASSWORD:
+        return RedirectResponse("/", status_code=303)
+    form = await request.form()
+    supplied_password = form.get("password", "")
+    if secrets.compare_digest(supplied_password, APP_PASSWORD):
+        response = RedirectResponse("/", status_code=303)
+        response.set_cookie("app_auth", APP_PASSWORD, httponly=True, samesite="lax")
+        return response
+    return RedirectResponse("/login?error=1", status_code=303)
+
+
+@app.get("/logout")
+async def logout():
+    response = RedirectResponse("/login", status_code=303)
+    response.delete_cookie("app_auth")
+    return response
 
 
 # ============================================================================
@@ -102,19 +206,30 @@ async def create_client(
 
 @app.get("/clients/{client_id}", response_class=HTMLResponse)
 async def view_client(request: Request, client_id: int, db: Session = Depends(get_db)):
-    """View client details and manage"""
+    """View client details and manage - unified dashboard"""
     client = db.query(Client).filter(Client.id == client_id).first()
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
 
     posts = db.query(Post).filter(Post.client_id == client_id).order_by(Post.created_at.desc()).all()
     photos = db.query(Photo).filter(Photo.client_id == client_id).all()
+    
+    # Get profile and platform strategies for dashboard
+    profile = db.query(ClientProfile).filter(ClientProfile.client_id == client_id).first()
+    platform_strategies = db.query(PlatformStrategy).filter(PlatformStrategy.client_id == client_id).all()
+    strategies_by_platform = {s.platform: s for s in platform_strategies}
+    
+    # Available platforms
+    platforms = ["instagram", "facebook", "gbp", "linkedin", "tiktok", "twitter"]
 
     return templates.TemplateResponse("agency/client_detail.html", {
         "request": request,
         "client": client,
         "posts": posts,
-        "photos": photos
+        "photos": photos,
+        "profile": profile,
+        "strategies_by_platform": strategies_by_platform,
+        "platforms": platforms
     })
 
 
@@ -196,10 +311,10 @@ async def generate_captions(
     client_id: int,
     db: Session = Depends(get_db)
 ):
-    """Generate captions using AI"""
+    """Generate captions using AI - uses full profile if available"""
     client = db.query(Client).filter(Client.id == client_id).first()
-    if not client or not client.strategy:
-        raise HTTPException(status_code=404, detail="Client or strategy not found")
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
 
     form_data = await request.form()
 
@@ -211,47 +326,97 @@ async def generate_captions(
     existing_posts = db.query(Post).filter(Post.client_id == client_id).all()
     previous_captions.extend([p.caption for p in existing_posts])
 
-    # Build strategy dict
-    strategy_dict = {
-        "brand_voice": client.strategy.brand_voice,
-        "tone_keywords": client.strategy.tone_keywords or [],
-        "content_pillars": client.strategy.content_pillars or [],
-        "target_audience": client.strategy.target_audience,
-        "audience_pain_points": client.strategy.audience_pain_points or [],
-        "industry": client.strategy.industry,
-        "unique_selling_points": client.strategy.unique_selling_points or [],
-        "key_messages": client.strategy.key_messages or [],
-        "topics_to_avoid": client.strategy.topics_to_avoid or [],
-        "hashtag_sets": client.strategy.hashtag_sets or {}
-    }
-
-    # Generate captions
+    # Get form parameters
     num_captions = int(form_data.get("num_captions", 5))
     platform = form_data.get("platform", "instagram")
     content_theme = form_data.get("content_theme", None)
     specific_topic = form_data.get("specific_topic", None)
     batch_name = form_data.get("batch_name", f"Batch {datetime.now().strftime('%Y-%m-%d')}")
 
-    captions = caption_generator.generate_captions(
-        strategy=strategy_dict,
-        previous_posts=previous_captions,
-        num_captions=num_captions,
-        platform=platform,
-        content_theme=content_theme if content_theme else None,
-        specific_topic=specific_topic if specific_topic else None
-    )
+    # Check if client has full profile documents
+    client_profile = db.query(ClientProfile).filter(ClientProfile.client_id == client_id).first()
+    platform_strategy = db.query(PlatformStrategy).filter(
+        PlatformStrategy.client_id == client_id,
+        PlatformStrategy.platform == platform
+    ).first()
+
+    # Fetch recent edited posts for learning (before/after examples)
+    edited_posts = db.query(Post).filter(
+        Post.client_id == client_id,
+        Post.was_edited == True,
+        Post.original_caption.isnot(None)
+    ).order_by(Post.updated_at.desc()).limit(10).all()
+
+    edited_examples = []
+    for ep in edited_posts:
+        if ep.original_caption and ep.caption and ep.original_caption != ep.caption:
+            edited_examples.append({
+                "original": ep.original_caption,
+                "edited": ep.caption
+            })
+    
+    if edited_examples:
+        print(f"[Caption Generator] Found {len(edited_examples)} edited examples to learn from")
+
+    # Use full-context generator if profile is available
+    if client_profile and client_profile.profile_markdown:
+        print(f"[Caption Generator] Using FULL PROFILE context for {client.name}")
+        captions = caption_generator.generate_captions_with_full_context(
+            client_name=client.name,
+            profile_markdown=client_profile.profile_markdown,
+            master_strategy_markdown=client_profile.master_strategy_markdown,
+            platform_strategy_markdown=platform_strategy.strategy_markdown if platform_strategy else None,
+            previous_posts=previous_captions,
+            num_captions=num_captions,
+            platform=platform,
+            content_theme=content_theme if content_theme else None,
+            specific_topic=specific_topic if specific_topic else None,
+            edited_examples=edited_examples if edited_examples else None
+        )
+    else:
+        # Fall back to legacy strategy-dict based generation
+        if not client.strategy:
+            raise HTTPException(status_code=404, detail="Client strategy not found. Please upload a profile or configure strategy.")
+
+        print(f"[Caption Generator] Using LEGACY strategy dict for {client.name}")
+        strategy_dict = {
+            "brand_voice": client.strategy.brand_voice,
+            "tone_keywords": client.strategy.tone_keywords or [],
+            "content_pillars": client.strategy.content_pillars or [],
+            "target_audience": client.strategy.target_audience,
+            "audience_pain_points": client.strategy.audience_pain_points or [],
+            "industry": client.strategy.industry,
+            "unique_selling_points": client.strategy.unique_selling_points or [],
+            "key_messages": client.strategy.key_messages or [],
+            "topics_to_avoid": client.strategy.topics_to_avoid or [],
+            "hashtag_sets": client.strategy.hashtag_sets or {}
+        }
+
+        captions = caption_generator.generate_captions(
+            strategy=strategy_dict,
+            previous_posts=previous_captions,
+            num_captions=num_captions,
+            platform=platform,
+            content_theme=content_theme if content_theme else None,
+            specific_topic=specific_topic if specific_topic else None
+        )
 
     # Save generated captions as posts
     for cap in captions:
         if "error" not in cap:
+            caption_text = cap.get("caption", "")
             hashtags = " ".join([f"#{h}" for h in cap.get("hashtags", [])])
             post = Post(
                 client_id=client_id,
-                caption=cap.get("caption", ""),
+                caption=caption_text,
                 hashtags=hashtags,
                 platform=platform,
                 batch_name=batch_name,
-                status=PostStatus.DRAFT
+                status=PostStatus.DRAFT,
+                # Store original for learning from edits
+                original_caption=caption_text,
+                original_hashtags=hashtags,
+                was_edited=False
             )
             db.add(post)
 
@@ -293,8 +458,17 @@ async def update_post(
 
     form_data = await request.form()
 
-    post.caption = form_data.get("caption", post.caption)
-    post.hashtags = form_data.get("hashtags", post.hashtags)
+    new_caption = form_data.get("caption", post.caption)
+    new_hashtags = form_data.get("hashtags", post.hashtags)
+
+    # Detect if caption was edited from original (for learning)
+    if post.original_caption and new_caption != post.original_caption:
+        post.was_edited = True
+    if post.original_hashtags and new_hashtags != post.original_hashtags:
+        post.was_edited = True
+
+    post.caption = new_caption
+    post.hashtags = new_hashtags
     post.platform = form_data.get("platform", post.platform)
 
     photo_id = form_data.get("photo_id")
@@ -997,6 +1171,273 @@ async def delete_strategy_file(
         file_path.unlink()
 
     db.delete(strategy_file)
+    db.commit()
+
+    return JSONResponse({"success": True})
+
+
+# ============================================================================
+# FULL CLIENT PROFILE MANAGEMENT
+# ============================================================================
+
+@app.get("/clients/{client_id}/profile", response_class=HTMLResponse)
+async def view_client_profile(request: Request, client_id: int, db: Session = Depends(get_db)):
+    """View and edit full client profile markdown"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    # Get or create profile
+    profile = db.query(ClientProfile).filter(ClientProfile.client_id == client_id).first()
+
+    return templates.TemplateResponse("agency/profile_editor.html", {
+        "request": request,
+        "client": client,
+        "profile": profile
+    })
+
+
+@app.post("/clients/{client_id}/profile/upload")
+async def upload_client_profile(
+    request: Request,
+    client_id: int,
+    db: Session = Depends(get_db)
+):
+    """Upload or update full client profile markdown"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    form_data = await request.form()
+
+    # Get file or text content
+    file = form_data.get("profile_file")
+    text_content = form_data.get("profile_markdown", "")
+    master_strategy_text = form_data.get("master_strategy_markdown", "")
+    strategy_brief_text = form_data.get("strategy_brief_markdown", "")
+
+    profile_content = text_content
+
+    # If file uploaded, read it
+    if file and hasattr(file, 'read'):
+        content = await file.read()
+        profile_content = content.decode('utf-8', errors='ignore')
+
+    # Get or create profile record
+    profile = db.query(ClientProfile).filter(ClientProfile.client_id == client_id).first()
+    if not profile:
+        profile = ClientProfile(client_id=client_id)
+        db.add(profile)
+
+    # Update profile
+    if profile_content:
+        profile.profile_markdown = profile_content
+    if master_strategy_text:
+        profile.master_strategy_markdown = master_strategy_text
+    if strategy_brief_text:
+        profile.strategy_brief_markdown = strategy_brief_text
+
+    profile.updated_at = datetime.utcnow()
+    db.commit()
+
+    # Check if this is an AJAX request
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JSONResponse({"success": True, "message": "Profile updated successfully"})
+
+    return RedirectResponse(f"/clients/{client_id}/profile", status_code=303)
+
+
+@app.post("/clients/{client_id}/profile/upload-file")
+async def upload_profile_file(
+    client_id: int,
+    file: UploadFile = File(...),
+    doc_type: str = Form("profile"),
+    db: Session = Depends(get_db)
+):
+    """Upload a markdown file for profile or master strategy"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    content = await file.read()
+    markdown_content = content.decode('utf-8', errors='ignore')
+
+    # Get or create profile
+    profile = db.query(ClientProfile).filter(ClientProfile.client_id == client_id).first()
+    if not profile:
+        profile = ClientProfile(client_id=client_id)
+        db.add(profile)
+
+    # Update the appropriate field
+    if doc_type == "profile":
+        profile.profile_markdown = markdown_content
+    elif doc_type == "master_strategy":
+        profile.master_strategy_markdown = markdown_content
+    elif doc_type == "strategy_brief":
+        profile.strategy_brief_markdown = markdown_content
+
+    profile.updated_at = datetime.utcnow()
+    db.commit()
+
+    return JSONResponse({
+        "success": True,
+        "filename": file.filename,
+        "doc_type": doc_type,
+        "content_length": len(markdown_content)
+    })
+
+
+# ============================================================================
+# PLATFORM STRATEGIES MANAGEMENT
+# ============================================================================
+
+@app.get("/clients/{client_id}/strategies", response_class=HTMLResponse)
+async def view_platform_strategies(request: Request, client_id: int, db: Session = Depends(get_db)):
+    """View all platform strategies for a client"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    # Get all platform strategies
+    strategies = db.query(PlatformStrategy).filter(PlatformStrategy.client_id == client_id).all()
+    strategies_by_platform = {s.platform: s for s in strategies}
+
+    # Available platforms
+    platforms = ["instagram", "facebook", "gbp", "linkedin", "tiktok", "twitter"]
+
+    return templates.TemplateResponse("agency/strategies.html", {
+        "request": request,
+        "client": client,
+        "strategies_by_platform": strategies_by_platform,
+        "platforms": platforms
+    })
+
+
+@app.get("/clients/{client_id}/strategies/{platform}", response_class=HTMLResponse)
+async def view_platform_strategy(request: Request, client_id: int, platform: str, db: Session = Depends(get_db)):
+    """View/edit a specific platform strategy"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    strategy = db.query(PlatformStrategy).filter(
+        PlatformStrategy.client_id == client_id,
+        PlatformStrategy.platform == platform
+    ).first()
+
+    return templates.TemplateResponse("agency/strategy_editor.html", {
+        "request": request,
+        "client": client,
+        "platform": platform,
+        "strategy": strategy
+    })
+
+
+@app.post("/clients/{client_id}/strategies/{platform}/upload")
+async def upload_platform_strategy(
+    request: Request,
+    client_id: int,
+    platform: str,
+    db: Session = Depends(get_db)
+):
+    """Upload or update a platform-specific strategy"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    form_data = await request.form()
+
+    # Get file or text content
+    file = form_data.get("strategy_file")
+    text_content = form_data.get("strategy_markdown", "")
+
+    strategy_content = text_content
+
+    # If file uploaded, read it
+    if file and hasattr(file, 'read'):
+        content = await file.read()
+        strategy_content = content.decode('utf-8', errors='ignore')
+
+    if not strategy_content:
+        raise HTTPException(status_code=400, detail="No content provided")
+
+    # Get or create platform strategy
+    strategy = db.query(PlatformStrategy).filter(
+        PlatformStrategy.client_id == client_id,
+        PlatformStrategy.platform == platform
+    ).first()
+
+    if not strategy:
+        strategy = PlatformStrategy(client_id=client_id, platform=platform)
+        db.add(strategy)
+
+    strategy.strategy_markdown = strategy_content
+    strategy.updated_at = datetime.utcnow()
+    db.commit()
+
+    # Check if AJAX request
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JSONResponse({
+            "success": True,
+            "message": f"{platform.title()} strategy updated successfully"
+        })
+
+    return RedirectResponse(f"/clients/{client_id}/strategies", status_code=303)
+
+
+@app.post("/clients/{client_id}/strategies/{platform}/upload-file")
+async def upload_strategy_file_direct(
+    client_id: int,
+    platform: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """Upload a markdown file for a platform strategy"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    content = await file.read()
+    markdown_content = content.decode('utf-8', errors='ignore')
+
+    # Get or create platform strategy
+    strategy = db.query(PlatformStrategy).filter(
+        PlatformStrategy.client_id == client_id,
+        PlatformStrategy.platform == platform
+    ).first()
+
+    if not strategy:
+        strategy = PlatformStrategy(client_id=client_id, platform=platform)
+        db.add(strategy)
+
+    strategy.strategy_markdown = markdown_content
+    strategy.updated_at = datetime.utcnow()
+    db.commit()
+
+    return JSONResponse({
+        "success": True,
+        "filename": file.filename,
+        "platform": platform,
+        "content_length": len(markdown_content)
+    })
+
+
+@app.delete("/clients/{client_id}/strategies/{platform}")
+async def delete_platform_strategy(
+    client_id: int,
+    platform: str,
+    db: Session = Depends(get_db)
+):
+    """Delete a platform strategy"""
+    strategy = db.query(PlatformStrategy).filter(
+        PlatformStrategy.client_id == client_id,
+        PlatformStrategy.platform == platform
+    ).first()
+
+    if not strategy:
+        raise HTTPException(status_code=404, detail="Strategy not found")
+
+    db.delete(strategy)
     db.commit()
 
     return JSONResponse({"success": True})

@@ -5,48 +5,55 @@
 {% block body %}
 {% include "components/nav.html" %}
 
-<main class="max-w-2xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+<main class="max-w-2xl mx-auto py-10 px-4 sm:px-6 lg:px-8" x-data="{ generating: false }">
+    <!-- Header -->
     <div class="mb-8">
-        <div class="flex items-center space-x-3">
-            <a href="/clients/{{ client.id }}" class="text-gray-400 hover:text-gray-600">&larr;</a>
-            <h1 class="text-2xl font-bold text-gray-900">Generate Captions</h1>
+        <div class="flex items-center space-x-3 mb-2">
+            <a href="/clients/{{ client.id }}" class="text-ink-400 hover:text-ink-600 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <h1 class="font-display text-2xl font-semibold text-ink-900">Generate Captions</h1>
         </div>
-        <p class="mt-1 text-sm text-gray-500">Create AI-powered captions for {{ client.name }}</p>
+        <p class="text-ink-500">Create AI-powered captions for <span class="font-medium text-ink-900">{{ client.name }}</span></p>
     </div>
 
     <!-- Strategy Check -->
     {% if not client.strategy or not client.strategy.brand_voice %}
-    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
         <div class="flex">
-            <svg class="h-5 w-5 text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <svg class="h-5 w-5 text-amber-500 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
             </svg>
             <div>
-                <h3 class="text-sm font-medium text-yellow-800">Strategy not complete</h3>
-                <p class="mt-1 text-sm text-yellow-700">
-                    <a href="/clients/{{ client.id }}/strategy" class="underline">Complete the strategy</a> for better caption quality.
+                <h3 class="text-sm font-semibold text-amber-800">Strategy not complete</h3>
+                <p class="mt-1 text-sm text-amber-700">
+                    <a href="/clients/{{ client.id }}/profile" class="underline hover:no-underline">Upload full profile</a> for better caption quality.
                 </p>
             </div>
         </div>
     </div>
     {% endif %}
 
-    <form method="POST" action="/clients/{{ client.id }}/generate" class="bg-white shadow rounded-lg p-6">
+    <!-- Generation Form -->
+    <form method="POST" action="/clients/{{ client.id }}/generate" @submit="generating = true" class="bg-white rounded-xl border border-cream-300 p-8">
         <div class="space-y-6">
             <!-- Batch Name -->
             <div>
-                <label for="batch_name" class="block text-sm font-medium text-gray-700 mb-2">Batch Name</label>
+                <label for="batch_name" class="block text-sm font-semibold text-ink-900 mb-2">Batch Name</label>
                 <input type="text" name="batch_name" id="batch_name"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    class="w-full px-4 py-3 border border-cream-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                     placeholder="e.g., Week of Dec 9, 2024"
                     value="Week of {{ now().strftime('%b %d, %Y') if now is defined else '' }}">
+                <p class="mt-1.5 text-xs text-ink-500">Helps organize your content batches</p>
             </div>
 
             <!-- Platform -->
             <div>
-                <label for="platform" class="block text-sm font-medium text-gray-700 mb-2">Platform</label>
+                <label for="platform" class="block text-sm font-semibold text-ink-900 mb-2">Platform</label>
                 <select name="platform" id="platform"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    class="w-full px-4 py-3 border border-cream-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors bg-white">
                     {% if client.strategy and client.strategy.platforms %}
                         {% for platform in client.strategy.platforms %}
                         <option value="{{ platform }}">{{ platform|capitalize }}</option>
@@ -64,65 +71,116 @@
 
             <!-- Number of Captions -->
             <div>
-                <label for="num_captions" class="block text-sm font-medium text-gray-700 mb-2">Number of Captions</label>
-                <select name="num_captions" id="num_captions"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="3">3 captions</option>
-                    <option value="5" selected>5 captions</option>
-                    <option value="7">7 captions (1 week)</option>
-                    <option value="10">10 captions</option>
-                    <option value="14">14 captions (2 weeks)</option>
-                </select>
+                <label for="num_captions" class="block text-sm font-semibold text-ink-900 mb-2">Number of Captions</label>
+                <div class="grid grid-cols-5 gap-2">
+                    <label class="relative">
+                        <input type="radio" name="num_captions" value="3" class="peer sr-only">
+                        <div class="px-4 py-3 text-center border border-cream-300 rounded-lg cursor-pointer peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700 hover:bg-cream-50 transition-colors">
+                            <span class="font-semibold">3</span>
+                        </div>
+                    </label>
+                    <label class="relative">
+                        <input type="radio" name="num_captions" value="5" class="peer sr-only" checked>
+                        <div class="px-4 py-3 text-center border border-cream-300 rounded-lg cursor-pointer peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700 hover:bg-cream-50 transition-colors">
+                            <span class="font-semibold">5</span>
+                        </div>
+                    </label>
+                    <label class="relative">
+                        <input type="radio" name="num_captions" value="7" class="peer sr-only">
+                        <div class="px-4 py-3 text-center border border-cream-300 rounded-lg cursor-pointer peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700 hover:bg-cream-50 transition-colors">
+                            <span class="font-semibold">7</span>
+                        </div>
+                    </label>
+                    <label class="relative">
+                        <input type="radio" name="num_captions" value="10" class="peer sr-only">
+                        <div class="px-4 py-3 text-center border border-cream-300 rounded-lg cursor-pointer peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700 hover:bg-cream-50 transition-colors">
+                            <span class="font-semibold">10</span>
+                        </div>
+                    </label>
+                    <label class="relative">
+                        <input type="radio" name="num_captions" value="14" class="peer sr-only">
+                        <div class="px-4 py-3 text-center border border-cream-300 rounded-lg cursor-pointer peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700 hover:bg-cream-50 transition-colors">
+                            <span class="font-semibold">14</span>
+                        </div>
+                    </label>
+                </div>
             </div>
 
             <!-- Content Theme -->
             <div>
-                <label for="content_theme" class="block text-sm font-medium text-gray-700 mb-2">Content Theme/Pillar (Optional)</label>
+                <label for="content_theme" class="block text-sm font-semibold text-ink-900 mb-2">Content Theme <span class="font-normal text-ink-500">(optional)</span></label>
                 {% if client.strategy and client.strategy.content_pillars %}
                 <select name="content_theme" id="content_theme"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="">Mix of pillars</option>
+                    class="w-full px-4 py-3 border border-cream-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors bg-white">
+                    <option value="">Mix of all pillars</option>
                     {% for pillar in client.strategy.content_pillars %}
                     <option value="{{ pillar }}">{{ pillar|capitalize }}</option>
                     {% endfor %}
                 </select>
                 {% else %}
                 <input type="text" name="content_theme" id="content_theme"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    class="w-full px-4 py-3 border border-cream-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                     placeholder="e.g., education, behind-the-scenes">
                 {% endif %}
             </div>
 
             <!-- Specific Topic -->
             <div>
-                <label for="specific_topic" class="block text-sm font-medium text-gray-700 mb-2">Specific Topic (Optional)</label>
+                <label for="specific_topic" class="block text-sm font-semibold text-ink-900 mb-2">Specific Topic <span class="font-normal text-ink-500">(optional)</span></label>
                 <input type="text" name="specific_topic" id="specific_topic"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    class="w-full px-4 py-3 border border-cream-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                     placeholder="e.g., holiday sale, new product launch, team spotlight">
-                <p class="mt-1 text-xs text-gray-500">Leave blank to let AI choose based on strategy</p>
+                <p class="mt-1.5 text-xs text-ink-500">Leave blank to let AI choose based on strategy</p>
             </div>
         </div>
 
         <!-- Submit -->
-        <div class="mt-8 flex justify-end space-x-3">
-            <a href="/clients/{{ client.id }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">Cancel</a>
-            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 flex items-center">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-                Generate Captions
+        <div class="mt-8 pt-6 border-t border-cream-200 flex items-center justify-between">
+            <a href="/clients/{{ client.id }}" class="text-sm font-medium text-ink-500 hover:text-ink-700 transition-colors">Cancel</a>
+            <button type="submit" 
+                class="inline-flex items-center px-6 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors btn-lift disabled:opacity-50 disabled:cursor-not-allowed"
+                :disabled="generating">
+                <template x-if="!generating">
+                    <span class="flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        Generate Captions
+                    </span>
+                </template>
+                <template x-if="generating">
+                    <span class="flex items-center">
+                        <svg class="w-5 h-5 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Generating...
+                    </span>
+                </template>
             </button>
         </div>
     </form>
 
     <!-- How it works -->
-    <div class="mt-8 bg-gray-50 rounded-lg p-6">
-        <h3 class="text-sm font-semibold text-gray-900 mb-2">How caption generation works</h3>
-        <ol class="text-sm text-gray-600 space-y-2 list-decimal list-inside">
-            <li>AI reads your client's strategy (brand voice, pillars, audience)</li>
-            <li>Checks previous posts to avoid duplicates</li>
-            <li>Generates unique, on-brand captions with hashtags</li>
-            <li>Captions are saved as drafts for you to review and edit</li>
+    <div class="mt-8 bg-cream-50 rounded-xl p-6 border border-cream-200">
+        <h3 class="font-display text-sm font-semibold text-ink-900 mb-3">How caption generation works</h3>
+        <ol class="text-sm text-ink-600 space-y-2">
+            <li class="flex items-start">
+                <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">1</span>
+                AI reads your full client profile and strategy documents
+            </li>
+            <li class="flex items-start">
+                <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">2</span>
+                Checks previous posts to avoid duplicates
+            </li>
+            <li class="flex items-start">
+                <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">3</span>
+                Learns from your past edits to match your style
+            </li>
+            <li class="flex items-start">
+                <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">4</span>
+                Generates unique, on-brand captions with hashtags
+            </li>
         </ol>
     </div>
 </main>

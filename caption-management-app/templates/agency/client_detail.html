@@ -5,221 +5,452 @@
 {% block body %}
 {% include "components/nav.html" %}
 
-<main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8" x-data="{ showLinkModal: false }">
+<main class="min-h-screen" x-data="clientDashboard()">
     <!-- Header -->
-    <div class="md:flex md:items-center md:justify-between mb-8">
-        <div>
-            <div class="flex items-center space-x-3">
-                <a href="/clients" class="text-gray-400 hover:text-gray-600">&larr;</a>
-                <h1 class="text-2xl font-bold text-gray-900">{{ client.name }}</h1>
+    <div class="bg-white border-b border-cream-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="flex items-center space-x-3">
+                        <a href="/clients" class="text-ink-400 hover:text-ink-600 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </a>
+                        <h1 class="font-display text-2xl font-semibold text-ink-900">{{ client.name }}</h1>
+                    </div>
+                    <p class="mt-1 text-sm text-ink-500">
+                        Review link: <code class="bg-cream-100 px-2 py-0.5 rounded text-xs font-mono text-ink-600">{{ request.url.scheme }}://{{ request.url.netloc }}/review/{{ client.review_token }}</code>
+                    </p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="/clients/{{ client.id }}/photos" class="px-4 py-2 text-sm font-medium text-ink-600 bg-white border border-cream-300 rounded-lg hover:bg-cream-50 transition-colors">
+                        Photos
+                    </a>
+                    <a href="/clients/{{ client.id }}/audits" class="px-4 py-2 text-sm font-medium text-ink-600 bg-white border border-cream-300 rounded-lg hover:bg-cream-50 transition-colors">
+                        Audits
+                    </a>
+                </div>
             </div>
-            <p class="mt-1 text-sm text-gray-500">
-                Client review link:
-                <code class="bg-gray-100 px-2 py-0.5 rounded text-xs">{{ request.url.scheme }}://{{ request.url.netloc }}/review/{{ client.review_token }}</code>
-            </p>
-        </div>
-        <div class="mt-4 md:mt-0 flex space-x-3">
-            <a href="/clients/{{ client.id }}/audits" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
-                Profile Audits
-            </a>
-            <a href="/clients/{{ client.id }}/photos" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
-                Photos
-            </a>
-            <a href="/clients/{{ client.id }}/strategy" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
-                Edit Strategy
-            </a>
-            <a href="/clients/{{ client.id }}/generate" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
-                Generate Captions
-            </a>
         </div>
     </div>
 
-    <!-- Quick Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div class="bg-white rounded-lg shadow p-5">
-            <div class="text-sm font-medium text-gray-500">Total Posts</div>
-            <div class="mt-1 text-3xl font-semibold text-gray-900">{{ posts|length }}</div>
-        </div>
-        <div class="bg-white rounded-lg shadow p-5">
-            <div class="text-sm font-medium text-gray-500">Drafts</div>
-            <div class="mt-1 text-3xl font-semibold text-gray-600">
-                {{ posts|selectattr('status', 'equalto', 'draft')|list|length }}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- ═══════════════════════════════════════════════════════════════════════
+             STRATEGY COMMAND CENTER
+             ═══════════════════════════════════════════════════════════════════════ -->
+        <div class="bg-ink-900 rounded-2xl p-8 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="font-display text-xl font-semibold text-white">Strategy Command Center</h2>
+                    <p class="text-ink-400 text-sm mt-1">Your AI needs these to generate perfect content</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    {% set total_docs = (1 if profile and profile.profile_markdown else 0) + (1 if profile and profile.master_strategy_markdown else 0) + strategies_by_platform|length %}
+                    {% set max_docs = 2 + platforms|length %}
+                    <span class="text-sm font-medium text-ink-400">{{ total_docs }}/{{ max_docs }} docs</span>
+                    <div class="w-24 h-2 bg-ink-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: {{ (total_docs / max_docs * 100)|int }}%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Core Documents Row -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <!-- Client Profile Card -->
+                <div class="bg-ink-800/50 rounded-xl p-5 border border-ink-700 hover:border-ink-600 transition-colors group">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-white">Client Profile</h3>
+                                <p class="text-xs text-ink-400">Business, audience, FAQs, services</p>
+                            </div>
+                        </div>
+                        {% if profile and profile.profile_markdown %}
+                        <span class="px-2 py-1 text-xs font-medium text-emerald-400 bg-emerald-500/10 rounded-md border border-emerald-500/20">
+                            ✓ Loaded
+                        </span>
+                        {% else %}
+                        <span class="px-2 py-1 text-xs font-medium text-amber-400 bg-amber-500/10 rounded-md border border-amber-500/20">
+                            Missing
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if profile and profile.profile_markdown %}
+                    <div class="mt-4 p-3 bg-ink-900/50 rounded-lg">
+                        <p class="text-xs text-ink-400 line-clamp-2">{{ profile.profile_markdown[:200] | replace('\n', ' ') }}...</p>
+                        <p class="text-xs text-ink-500 mt-2">{{ (profile.profile_markdown|length / 1000)|round(1) }}KB</p>
+                    </div>
+                    <div class="mt-4">
+                        <a href="/clients/{{ client.id }}/profile" class="block w-full px-3 py-2 text-sm font-medium text-center text-white bg-ink-700 rounded-lg hover:bg-ink-600 transition-colors">
+                            View / Edit
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="mt-4 flex space-x-2">
+                        <label class="flex-1 px-3 py-2 text-sm font-medium text-center text-white bg-amber-600 rounded-lg hover:bg-amber-500 transition-colors cursor-pointer">
+                            <input type="file" class="hidden" accept=".md,.txt" @change="uploadDoc($event, 'profile')">
+                            Upload
+                        </label>
+                        <a href="/clients/{{ client.id }}/profile" class="flex-1 px-3 py-2 text-sm font-medium text-center text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-lg hover:bg-amber-500/20 transition-colors">
+                            Create
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Master Strategy Card -->
+                <div class="bg-ink-800/50 rounded-xl p-5 border border-ink-700 hover:border-ink-600 transition-colors group">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-xl bg-emerald-600 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-white">Master Strategy</h3>
+                                <p class="text-xs text-ink-400">Pillars, themes, voice, priorities</p>
+                            </div>
+                        </div>
+                        {% if profile and profile.master_strategy_markdown %}
+                        <span class="px-2 py-1 text-xs font-medium text-emerald-400 bg-emerald-500/10 rounded-md border border-emerald-500/20">
+                            ✓ Loaded
+                        </span>
+                        {% else %}
+                        <span class="px-2 py-1 text-xs font-medium text-amber-400 bg-amber-500/10 rounded-md border border-amber-500/20">
+                            Missing
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if profile and profile.master_strategy_markdown %}
+                    <div class="mt-4 p-3 bg-ink-900/50 rounded-lg">
+                        <p class="text-xs text-ink-400 line-clamp-2">{{ profile.master_strategy_markdown[:200] | replace('\n', ' ') }}...</p>
+                        <p class="text-xs text-ink-500 mt-2">{{ (profile.master_strategy_markdown|length / 1000)|round(1) }}KB</p>
+                    </div>
+                    <div class="mt-4">
+                        <a href="/clients/{{ client.id }}/profile" class="block w-full px-3 py-2 text-sm font-medium text-center text-white bg-ink-700 rounded-lg hover:bg-ink-600 transition-colors">
+                            View / Edit
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="mt-4 flex space-x-2">
+                        <label class="flex-1 px-3 py-2 text-sm font-medium text-center text-white bg-emerald-600 rounded-lg hover:bg-emerald-500 transition-colors cursor-pointer">
+                            <input type="file" class="hidden" accept=".md,.txt" @change="uploadDoc($event, 'master_strategy')">
+                            Upload
+                        </label>
+                        <a href="/clients/{{ client.id }}/profile" class="flex-1 px-3 py-2 text-sm font-medium text-center text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-lg hover:bg-emerald-500/20 transition-colors">
+                            Create
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Platform Strategies Row -->
+            <div>
+                <h3 class="text-sm font-medium text-ink-400 mb-3">Platform Strategies</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                    {% for platform in platforms %}
+                    {% set strategy = strategies_by_platform.get(platform) %}
+                    <div class="bg-ink-800/50 rounded-xl p-4 border border-ink-700 hover:border-ink-600 transition-all text-center group cursor-pointer"
+                         @click="platformAction('{{ platform }}', {{ 'true' if strategy else 'false' }})">
+                        <!-- Platform Icon -->
+                        <div class="w-10 h-10 mx-auto rounded-xl flex items-center justify-center mb-2
+                            {% if platform == 'instagram' %}bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400
+                            {% elif platform == 'facebook' %}bg-blue-600
+                            {% elif platform == 'gbp' %}bg-gradient-to-br from-blue-500 via-green-500 to-yellow-500
+                            {% elif platform == 'linkedin' %}bg-blue-700
+                            {% elif platform == 'tiktok' %}bg-ink-900
+                            {% else %}bg-ink-600{% endif %}">
+                            {% if platform == 'instagram' %}
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                            {% elif platform == 'facebook' %}
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                            {% elif platform == 'gbp' %}
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                            {% elif platform == 'linkedin' %}
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                            {% elif platform == 'tiktok' %}
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+                            {% else %}
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                            {% endif %}
+                        </div>
+                        
+                        <p class="text-sm font-medium text-white capitalize mb-1">
+                            {{ 'Google' if platform == 'gbp' else platform }}
+                        </p>
+                        
+                        {% if strategy %}
+                        <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 rounded-md">
+                            ✓ Ready
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium text-ink-500 bg-ink-700 rounded-md group-hover:text-amber-400 group-hover:bg-amber-500/10 transition-colors">
+                            + Add
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-5">
-            <div class="text-sm font-medium text-gray-500">Pending Review</div>
-            <div class="mt-1 text-3xl font-semibold text-yellow-600">
-                {{ posts|selectattr('status', 'equalto', 'client_review')|list|length }}
+
+        <!-- ═══════════════════════════════════════════════════════════════════════
+             GENERATE CAPTIONS
+             ═══════════════════════════════════════════════════════════════════════ -->
+        <div class="bg-white rounded-xl border border-cream-300 p-6 mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="font-display text-lg font-semibold text-ink-900">Generate Captions</h2>
+                    <p class="text-sm text-ink-500 mt-1">AI will use all your loaded strategy documents</p>
+                </div>
+                <a href="/clients/{{ client.id }}/generate" class="inline-flex items-center px-6 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors btn-lift">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    Generate New Captions
+                </a>
             </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-5">
-            <div class="text-sm font-medium text-gray-500">Metricool</div>
-            {% if client.metricool_blog_id %}
-            <div class="mt-1">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Linked
-                </span>
+
+        <!-- ═══════════════════════════════════════════════════════════════════════
+             POSTS LIST
+             ═══════════════════════════════════════════════════════════════════════ -->
+        <div class="bg-white rounded-xl border border-cream-300 overflow-hidden">
+            <div class="px-6 py-4 border-b border-cream-200 flex items-center justify-between">
+                <div>
+                    <h2 class="font-display text-lg font-semibold text-ink-900">Posts</h2>
+                    <p class="text-sm text-ink-500">{{ posts|length }} total</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 text-sm">
+                        <span class="px-2.5 py-1 bg-cream-100 text-ink-600 rounded-md font-medium">{{ posts|selectattr('status', 'equalto', 'draft')|list|length }} drafts</span>
+                        <span class="px-2.5 py-1 bg-amber-50 text-amber-700 rounded-md font-medium border border-amber-200">{{ posts|selectattr('status', 'equalto', 'client_review')|list|length }} review</span>
+                        <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-md font-medium border border-emerald-200">{{ posts|selectattr('status', 'equalto', 'approved')|list|length }} approved</span>
+                    </div>
+                </div>
             </div>
+
+            {% if posts %}
+            <ul class="divide-y divide-cream-200">
+                {% for post in posts[:20] %}
+                <li class="hover:bg-cream-50 transition-colors">
+                    <a href="/posts/{{ post.id }}" class="block px-6 py-4">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-start space-x-4 flex-1 min-w-0">
+                                {% if post.photo %}
+                                <img src="{{ post.photo.file_path }}" class="w-14 h-14 object-cover rounded-lg flex-shrink-0" alt="">
+                                {% else %}
+                                <div class="w-14 h-14 bg-cream-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-6 h-6 text-ink-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                {% endif %}
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm text-ink-900 line-clamp-2">{{ post.caption[:150] }}{% if post.caption|length > 150 %}...{% endif %}</p>
+                                    <div class="mt-2 flex items-center space-x-2 text-xs">
+                                        <span class="px-1.5 py-0.5 rounded bg-cream-100 text-ink-600 font-medium capitalize">{{ post.platform }}</span>
+                                        {% if post.batch_name %}
+                                        <span class="text-ink-400">{{ post.batch_name }}</span>
+                                        {% endif %}
+                                        {% if post.was_edited %}
+                                        <span class="text-emerald-600 font-medium" title="You edited this - the system is learning from your changes">✨ Learning</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ml-4 flex-shrink-0">
+                                {% if post.status == 'draft' %}
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-md bg-cream-100 text-ink-600">Draft</span>
+                                {% elif post.status == 'internal_review' %}
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-md bg-purple-50 text-purple-700 border border-purple-200">Internal</span>
+                                {% elif post.status == 'client_review' %}
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-md bg-amber-50 text-amber-700 border border-amber-200">Review</span>
+                                {% elif post.status == 'revision_requested' %}
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-md bg-red-50 text-red-700 border border-red-200">Changes</span>
+                                {% elif post.status == 'approved' %}
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">Approved</span>
+                                {% elif post.status == 'scheduled' %}
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-md bg-blue-50 text-blue-700 border border-blue-200">Scheduled</span>
+                                {% elif post.status == 'posted' %}
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-md bg-ink-100 text-ink-700">Posted</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% if posts|length > 20 %}
+            <div class="px-6 py-3 bg-cream-50 text-center border-t border-cream-200">
+                <span class="text-sm text-ink-500">Showing 20 of {{ posts|length }} posts</span>
+            </div>
+            {% endif %}
             {% else %}
-            <div class="mt-1">
-                <button @click="showLinkModal = true" class="text-sm text-indigo-600 hover:text-indigo-900">
-                    Link Account &rarr;
-                </button>
+            <div class="text-center py-16">
+                <div class="w-16 h-16 mx-auto bg-cream-100 rounded-2xl flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                </div>
+                <h3 class="font-display text-lg font-semibold text-ink-900 mb-2">No posts yet</h3>
+                <p class="text-sm text-ink-500 mb-6">Generate some captions to get started</p>
+                <a href="/clients/{{ client.id }}/generate" class="inline-flex items-center px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 btn-lift">
+                    Generate Captions
+                </a>
             </div>
             {% endif %}
         </div>
-    </div>
 
-    <!-- Strategy Summary -->
-    {% if client.strategy %}
-    <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Strategy Overview</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-                <h3 class="text-sm font-medium text-gray-500">Brand Voice</h3>
-                <p class="mt-1 text-sm text-gray-900">{{ client.strategy.brand_voice or 'Not set' }}</p>
-            </div>
-            <div>
-                <h3 class="text-sm font-medium text-gray-500">Content Pillars</h3>
-                <div class="mt-1 flex flex-wrap gap-1">
-                    {% if client.strategy.content_pillars %}
-                        {% for pillar in client.strategy.content_pillars %}
-                        <span class="px-2 py-0.5 text-xs rounded bg-indigo-100 text-indigo-700">{{ pillar }}</span>
-                        {% endfor %}
-                    {% else %}
-                    <span class="text-sm text-gray-400">Not set</span>
-                    {% endif %}
-                </div>
-            </div>
-            <div>
-                <h3 class="text-sm font-medium text-gray-500">Target Audience</h3>
-                <p class="mt-1 text-sm text-gray-900">{{ client.strategy.target_audience or 'Not set' }}</p>
-            </div>
-            <div>
-                <h3 class="text-sm font-medium text-gray-500">Platforms</h3>
-                <div class="mt-1 flex flex-wrap gap-1">
-                    {% if client.strategy.platforms %}
-                        {% for platform in client.strategy.platforms %}
-                        <span class="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-700">{{ platform }}</span>
-                        {% endfor %}
-                    {% else %}
-                    <span class="text-sm text-gray-400">Not set</span>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Posts List -->
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h2 class="text-lg font-semibold text-gray-900">Posts</h2>
-            <div class="flex space-x-2">
-                <select class="text-sm border-gray-300 rounded-lg" onchange="filterPosts(this.value)">
-                    <option value="all">All Status</option>
-                    <option value="draft">Drafts</option>
-                    <option value="client_review">Pending Review</option>
-                    <option value="approved">Approved</option>
-                    <option value="scheduled">Scheduled</option>
-                </select>
-            </div>
-        </div>
-
-        {% if posts %}
-        <ul class="divide-y divide-gray-200">
-            {% for post in posts %}
-            <li class="hover:bg-gray-50">
-                <a href="/posts/{{ post.id }}" class="block px-6 py-4">
-                    <div class="flex items-start justify-between">
-                        <div class="flex items-start space-x-4 flex-1 min-w-0">
-                            {% if post.photo %}
-                            <img src="{{ post.photo.file_path }}" class="w-16 h-16 object-cover rounded-lg" alt="">
-                            {% else %}
-                            <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                </svg>
-                            </div>
-                            {% endif %}
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm text-gray-900 line-clamp-2">{{ post.caption[:150] }}{% if post.caption|length > 150 %}...{% endif %}</p>
-                                <div class="mt-1 flex items-center space-x-2 text-xs text-gray-500">
-                                    <span class="px-1.5 py-0.5 rounded bg-gray-100">{{ post.platform }}</span>
-                                    {% if post.scheduled_date %}
-                                    <span>{{ post.scheduled_date.strftime('%b %d, %Y') }}</span>
-                                    {% endif %}
-                                    {% if post.batch_name %}
-                                    <span>&middot; {{ post.batch_name }}</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="ml-4 flex-shrink-0">
-                            {% if post.status == 'draft' %}
-                            <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">Draft</span>
-                            {% elif post.status == 'internal_review' %}
-                            <span class="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">Internal Review</span>
-                            {% elif post.status == 'client_review' %}
-                            <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Client Review</span>
-                            {% elif post.status == 'revision_requested' %}
-                            <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Changes Requested</span>
-                            {% elif post.status == 'approved' %}
-                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Approved</span>
-                            {% elif post.status == 'scheduled' %}
-                            <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Scheduled</span>
-                            {% elif post.status == 'posted' %}
-                            <span class="px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-800">Posted</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <div class="text-center py-12">
-            <p class="text-sm text-gray-500">No posts yet. Generate some captions to get started.</p>
-            <a href="/clients/{{ client.id }}/generate" class="mt-4 inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
-                Generate Captions
-            </a>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Import Previous Posts -->
-    <div class="mt-8 bg-white shadow rounded-lg p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Import Previous Posts</h2>
-        <p class="text-sm text-gray-500 mb-4">Upload a CSV of previous posts to help avoid duplicate content. CSV should have a "caption" column.</p>
-        <form method="POST" action="/clients/{{ client.id }}/import-previous" enctype="multipart/form-data" class="flex items-center space-x-4">
-            <input type="file" name="file" accept=".csv" class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-            <button type="submit" class="px-4 py-2 bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-700">
-                Import
-            </button>
-        </form>
-    </div>
-
-    <!-- Link Metricool Modal -->
-    <div x-show="showLinkModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
-        <div class="flex min-h-screen items-center justify-center p-4">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75" @click="showLinkModal = false"></div>
-            <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Link to Metricool</h3>
-                <form method="POST" action="/api/clients/{{ client.id }}/link-metricool">
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Metricool Blog ID</label>
-                        <input type="text" name="blog_id" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                            placeholder="e.g., 12345">
-                        <p class="mt-1 text-xs text-gray-500">Find this in your Metricool URL: app.metricool.com/...?blogId=XXXXX</p>
-                    </div>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" @click="showLinkModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">Link</button>
-                    </div>
+        <!-- Import Previous Posts (collapsed) -->
+        <details class="mt-6 bg-white rounded-xl border border-cream-300">
+            <summary class="px-6 py-4 cursor-pointer text-sm font-medium text-ink-600 hover:text-ink-900 transition-colors">
+                Import Previous Posts (for deduplication)
+            </summary>
+            <div class="px-6 pb-6 pt-2">
+                <p class="text-sm text-ink-500 mb-4">Upload a CSV of previous posts to help avoid duplicate content.</p>
+                <form method="POST" action="/clients/{{ client.id }}/import-previous" enctype="multipart/form-data" class="flex items-center space-x-4">
+                    <input type="file" name="file" accept=".csv" class="text-sm text-ink-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-cream-100 file:text-ink-700 hover:file:bg-cream-200 transition-colors">
+                    <button type="submit" class="px-4 py-2 bg-ink-900 text-white text-sm font-medium rounded-lg hover:bg-ink-800 transition-colors">
+                        Import
+                    </button>
                 </form>
             </div>
+        </details>
+    </div>
+
+    <!-- Platform Action Modal -->
+    <div x-show="showPlatformModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" x-transition>
+        <div class="flex min-h-screen items-center justify-center p-4">
+            <div class="fixed inset-0 bg-ink-900/50 backdrop-blur-sm" @click="showPlatformModal = false"></div>
+            <div class="relative bg-white rounded-2xl shadow-elevated max-w-md w-full p-6 animate-fade-in" @click.stop>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-display text-lg font-semibold text-ink-900 capitalize" x-text="selectedPlatform === 'gbp' ? 'Google Business Profile Strategy' : selectedPlatform + ' Strategy'"></h3>
+                    <button @click="showPlatformModal = false" class="text-ink-400 hover:text-ink-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div x-show="platformHasStrategy">
+                    <p class="text-sm text-ink-600 mb-4">This platform strategy is loaded and ready.</p>
+                    <div class="flex space-x-3">
+                        <a :href="`/clients/{{ client.id }}/strategies/${selectedPlatform}`" class="flex-1 px-4 py-2.5 text-sm font-medium text-center text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
+                            View / Edit
+                        </a>
+                        <button @click="showPlatformModal = false" class="px-4 py-2.5 text-sm font-medium text-ink-600 bg-cream-100 rounded-lg hover:bg-cream-200 transition-colors">
+                            Close
+                        </button>
+                    </div>
+                </div>
+                
+                <div x-show="!platformHasStrategy">
+                    <p class="text-sm text-ink-600 mb-4">No strategy loaded for this platform. Upload one or create from scratch.</p>
+                    <div class="space-y-3">
+                        <label class="block w-full px-4 py-3 text-sm font-medium text-center text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors cursor-pointer">
+                            <input type="file" class="hidden" accept=".md,.txt" @change="uploadPlatformStrategy($event)">
+                            Upload Strategy File
+                        </label>
+                        <a :href="`/clients/{{ client.id }}/strategies/${selectedPlatform}`" class="block w-full px-4 py-3 text-sm font-medium text-center text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors">
+                            Create / Edit Manually
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Toast Notification -->
+    <div x-show="uploadMessage" x-transition class="fixed bottom-4 right-4 px-4 py-3 rounded-xl shadow-elevated toast"
+        :class="uploadError ? 'bg-red-50 text-red-800 border border-red-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'">
+        <span x-text="uploadMessage"></span>
+    </div>
 </main>
+
+<script>
+function clientDashboard() {
+    return {
+        showPlatformModal: false,
+        selectedPlatform: '',
+        platformHasStrategy: false,
+        uploadMessage: '',
+        uploadError: false,
+
+        platformAction(platform, hasStrategy) {
+            this.selectedPlatform = platform;
+            this.platformHasStrategy = hasStrategy;
+            this.showPlatformModal = true;
+        },
+
+        async uploadDoc(event, docType) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('doc_type', docType);
+
+            try {
+                const response = await fetch('/clients/{{ client.id }}/profile/upload-file', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.uploadMessage = `${file.name} uploaded!`;
+                    this.uploadError = false;
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    this.uploadMessage = data.error || 'Upload failed';
+                    this.uploadError = true;
+                }
+            } catch (error) {
+                this.uploadMessage = 'Upload failed';
+                this.uploadError = true;
+            }
+            setTimeout(() => this.uploadMessage = '', 3000);
+        },
+
+        async uploadPlatformStrategy(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`/clients/{{ client.id }}/strategies/${this.selectedPlatform}/upload-file`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.uploadMessage = `${this.selectedPlatform} strategy uploaded!`;
+                    this.uploadError = false;
+                    this.showPlatformModal = false;
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    this.uploadMessage = data.error || 'Upload failed';
+                    this.uploadError = true;
+                }
+            } catch (error) {
+                this.uploadMessage = 'Upload failed';
+                this.uploadError = true;
+            }
+            setTimeout(() => this.uploadMessage = '', 3000);
+        }
+    }
+}
+</script>
 {% endblock %}

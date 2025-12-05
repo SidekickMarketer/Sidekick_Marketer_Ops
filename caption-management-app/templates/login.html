@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Caption Manager{% endblock %}
+
+{% block body %}
+<main class="min-h-screen bg-cream-100 flex items-center justify-center px-4">
+    <div class="max-w-md w-full">
+        <div class="bg-white rounded-xl border border-cream-300 shadow-soft p-8">
+            <h1 class="font-display text-2xl font-semibold text-ink-900 mb-2">Sign In</h1>
+            <p class="text-sm text-ink-500 mb-6">Enter the app password to continue.</p>
+
+            {% if request.query_params.get('error') %}
+            <div class="mb-4 bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg px-3 py-2">
+                Incorrect password. Please try again.
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/login" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-ink-900 mb-2">Password</label>
+                    <input type="password" name="password" required
+                        class="w-full px-4 py-3 border border-cream-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                        placeholder="App password">
+                </div>
+                <button type="submit"
+                    class="w-full px-4 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors btn-lift">
+                    Sign In
+                </button>
+            </form>
+
+            <p class="text-xs text-ink-400 mt-4">Set APP_PASSWORD in your .env file to secure the app.</p>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+

@@ -5,134 +5,196 @@
 {% block body %}
 {% include "components/nav.html" %}
 
-<main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+<main class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
     <!-- Header -->
-    <div class="md:flex md:items-center md:justify-between mb-8">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
-            <p class="mt-1 text-sm text-gray-500">Manage your clients' social media content</p>
-        </div>
-        <div class="mt-4 md:mt-0">
-            <a href="/clients/new" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
-                + New Client
-            </a>
-        </div>
+    <div class="mb-10">
+        <h1 class="font-display text-3xl font-semibold text-ink-900">Good {{ 'morning' if now is defined and now.hour < 12 else 'afternoon' if now is defined and now.hour < 18 else 'evening' }}</h1>
+        <p class="mt-2 text-ink-500">Here's what's happening with your clients today.</p>
     </div>
 
     <!-- Status Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div class="bg-white rounded-lg shadow p-5">
-            <div class="text-sm font-medium text-gray-500">Total Clients</div>
-            <div class="mt-1 text-3xl font-semibold text-gray-900">{{ clients|length }}</div>
-        </div>
-        <div class="bg-white rounded-lg shadow p-5">
-            <div class="text-sm font-medium text-gray-500">Pending Review</div>
-            <div class="mt-1 text-3xl font-semibold text-yellow-600">
-                {{ recent_posts|selectattr('status', 'equalto', 'client_review')|list|length }}
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-10">
+        <div class="bg-white rounded-xl border border-cream-300 p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-ink-500">Clients</p>
+                    <p class="mt-2 text-3xl font-display font-semibold text-ink-900">{{ clients|length }}</p>
+                </div>
+                <div class="w-12 h-12 bg-cream-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-ink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
             </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-5">
-            <div class="text-sm font-medium text-gray-500">Approved</div>
-            <div class="mt-1 text-3xl font-semibold text-green-600">
-                {{ recent_posts|selectattr('status', 'equalto', 'approved')|list|length }}
+        
+        <div class="bg-white rounded-xl border border-cream-300 p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-ink-500">Pending Review</p>
+                    <p class="mt-2 text-3xl font-display font-semibold text-amber-600">
+                        {{ recent_posts|selectattr('status', 'equalto', 'client_review')|list|length }}
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
             </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-5">
-            <div class="text-sm font-medium text-gray-500">Metricool</div>
-            <div class="mt-1">
-                {% if metricool_status.configured %}
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Connected
-                </span>
-                {% else %}
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    Not Configured
-                </span>
-                {% endif %}
+        
+        <div class="bg-white rounded-xl border border-cream-300 p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-ink-500">Approved</p>
+                    <p class="mt-2 text-3xl font-display font-semibold text-emerald-600">
+                        {{ recent_posts|selectattr('status', 'equalto', 'approved')|list|length }}
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl border border-cream-300 p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-ink-500">Metricool</p>
+                    {% if metricool_status.configured %}
+                    <p class="mt-2 flex items-center">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
+                        <span class="text-sm font-medium text-emerald-700">Connected</span>
+                    </p>
+                    {% else %}
+                    <p class="mt-2 flex items-center">
+                        <span class="w-2 h-2 bg-ink-400 rounded-full mr-2"></span>
+                        <span class="text-sm font-medium text-ink-500">Not configured</span>
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="w-12 h-12 bg-cream-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-ink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                    </svg>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Clients Grid -->
-    <h2 class="text-lg font-semibold text-gray-900 mb-4">Your Clients</h2>
+    <!-- Clients Section -->
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="font-display text-xl font-semibold text-ink-900">Your Clients</h2>
+        <a href="/clients/new" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 btn-lift">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            New Client
+        </a>
+    </div>
 
     {% if clients %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
         {% for client in clients %}
-        <a href="/clients/{{ client.id }}" class="block bg-white rounded-lg shadow hover:shadow-md transition-shadow p-5">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-medium text-gray-900">{{ client.name }}</h3>
+        <a href="/clients/{{ client.id }}" class="group block bg-white rounded-xl border border-cream-300 p-6 card-hover">
+            <div class="flex items-start justify-between mb-4">
+                <div>
+                    <h3 class="font-display text-lg font-semibold text-ink-900 group-hover:text-emerald-700 transition-colors">{{ client.name }}</h3>
+                    <p class="text-sm text-ink-500 mt-1">{{ client.posts|length }} posts</p>
+                </div>
                 {% if client.metricool_blog_id %}
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                <span class="px-2 py-1 text-xs font-medium bg-emerald-50 text-emerald-700 rounded-md border border-emerald-200">
                     Linked
                 </span>
                 {% endif %}
             </div>
-            <div class="mt-2 text-sm text-gray-500">
-                {{ client.posts|length }} posts
-            </div>
-            <div class="mt-3 flex space-x-2">
+            
+            <!-- Platform badges -->
+            <div class="flex flex-wrap gap-2">
                 {% if client.strategy and client.strategy.platforms %}
-                    {% for platform in client.strategy.platforms %}
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                    {% for platform in client.strategy.platforms[:4] %}
+                    <span class="px-2 py-1 text-xs font-medium bg-cream-100 text-ink-600 rounded-md capitalize">
                         {{ platform }}
                     </span>
                     {% endfor %}
+                    {% if client.strategy.platforms|length > 4 %}
+                    <span class="px-2 py-1 text-xs font-medium bg-cream-100 text-ink-500 rounded-md">
+                        +{{ client.strategy.platforms|length - 4 }}
+                    </span>
+                    {% endif %}
+                {% else %}
+                <span class="text-xs text-ink-400 italic">No platforms set</span>
                 {% endif %}
+            </div>
+            
+            <!-- Quick action hint -->
+            <div class="mt-4 pt-4 border-t border-cream-200 flex items-center justify-between">
+                <span class="text-xs text-ink-400">Click to manage</span>
+                <svg class="w-4 h-4 text-ink-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
             </div>
         </a>
         {% endfor %}
     </div>
     {% else %}
-    <div class="text-center py-12 bg-white rounded-lg shadow">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-        </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No clients yet</h3>
-        <p class="mt-1 text-sm text-gray-500">Get started by adding your first client.</p>
-        <div class="mt-6">
-            <a href="/clients/new" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
-                + New Client
-            </a>
+    <div class="bg-white rounded-xl border border-cream-300 p-12 text-center">
+        <div class="w-16 h-16 bg-cream-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
         </div>
+        <h3 class="font-display text-lg font-semibold text-ink-900 mb-2">No clients yet</h3>
+        <p class="text-ink-500 mb-6 max-w-sm mx-auto">Get started by adding your first client. You'll be generating amazing captions in no time.</p>
+        <a href="/clients/new" class="inline-flex items-center px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 btn-lift">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add Your First Client
+        </a>
     </div>
     {% endif %}
 
     <!-- Recent Activity -->
     {% if recent_posts %}
-    <h2 class="text-lg font-semibold text-gray-900 mb-4 mt-8">Recent Posts</h2>
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-        <ul class="divide-y divide-gray-200">
-            {% for post in recent_posts[:5] %}
-            <li>
-                <a href="/posts/{{ post.id }}" class="block hover:bg-gray-50 px-6 py-4">
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-900 truncate">
-                                {{ post.caption[:80] }}{% if post.caption|length > 80 %}...{% endif %}
-                            </p>
-                            <p class="text-sm text-gray-500">
-                                {{ post.client.name }} &middot; {{ post.platform }}
-                            </p>
+    <div class="mt-10">
+        <h2 class="font-display text-xl font-semibold text-ink-900 mb-6">Recent Posts</h2>
+        <div class="bg-white rounded-xl border border-cream-300 overflow-hidden">
+            <ul class="divide-y divide-cream-200">
+                {% for post in recent_posts[:5] %}
+                <li>
+                    <a href="/posts/{{ post.id }}" class="block hover:bg-cream-50 px-6 py-4 transition-colors">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-ink-900 truncate">
+                                    {{ post.caption[:80] }}{% if post.caption|length > 80 %}...{% endif %}
+                                </p>
+                                <p class="text-sm text-ink-500 mt-1">
+                                    {{ post.client.name }} · <span class="capitalize">{{ post.platform }}</span>
+                                </p>
+                            </div>
+                            <div class="ml-6 flex-shrink-0">
+                                {% if post.status == 'draft' %}
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-md bg-cream-100 text-ink-600">Draft</span>
+                                {% elif post.status == 'client_review' %}
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-md bg-amber-50 text-amber-700 border border-amber-200">Review</span>
+                                {% elif post.status == 'revision_requested' %}
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-md bg-rust-50 text-rust-700 border border-rust-200">Changes</span>
+                                {% elif post.status == 'approved' %}
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">Approved</span>
+                                {% elif post.status == 'scheduled' %}
+                                <span class="px-2.5 py-1 text-xs font-medium rounded-md bg-blue-50 text-blue-700 border border-blue-200">Scheduled</span>
+                                {% endif %}
+                            </div>
                         </div>
-                        <div class="ml-4">
-                            {% if post.status == 'draft' %}
-                            <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">Draft</span>
-                            {% elif post.status == 'client_review' %}
-                            <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Pending Review</span>
-                            {% elif post.status == 'revision_requested' %}
-                            <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Changes Requested</span>
-                            {% elif post.status == 'approved' %}
-                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Approved</span>
-                            {% elif post.status == 'scheduled' %}
-                            <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Scheduled</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
     {% endif %}
 </main>

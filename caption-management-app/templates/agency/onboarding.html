@@ -58,11 +58,88 @@
 
     <!-- Step 1: Upload Strategy Files -->
     <div x-show="currentStep === 1" class="space-y-6">
+        <!-- Full Strategy Documents Upload (NEW - stores complete markdown) -->
+        <div class="bg-white shadow rounded-lg p-6 border-2 border-indigo-100">
+            <div class="flex items-start space-x-3 mb-4">
+                <div class="flex-shrink-0">
+                    <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-indigo-100 text-indigo-600 text-sm font-bold">★</span>
+                </div>
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Full Strategy Documents</h2>
+                    <p class="text-sm text-gray-500">
+                        Upload complete markdown documents. These will be stored in full and used directly when generating captions.
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Client Profile Upload -->
+                <div class="border rounded-lg p-4" :class="profileUploaded ? 'border-green-300 bg-green-50' : 'border-gray-200'">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-medium text-gray-900">Client Profile</h3>
+                        <span x-show="profileUploaded" class="text-xs text-green-600 font-medium">Uploaded</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3">00_CLIENT_PROFILE.md - Business info, audience, FAQs, instructors</p>
+                    <input type="file" id="profile-file" class="hidden" accept=".md,.markdown,.txt"
+                        @change="uploadFullDoc($event.target.files[0], 'profile')">
+                    <label for="profile-file" class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                        </svg>
+                        Upload .md
+                    </label>
+                </div>
+
+                <!-- Master Strategy Upload -->
+                <div class="border rounded-lg p-4" :class="masterStrategyUploaded ? 'border-green-300 bg-green-50' : 'border-gray-200'">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-medium text-gray-900">Master Strategy</h3>
+                        <span x-show="masterStrategyUploaded" class="text-xs text-green-600 font-medium">Uploaded</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3">00_MASTER_STRATEGY.md - Pillars, voice, quarterly themes</p>
+                    <input type="file" id="master-strategy-file" class="hidden" accept=".md,.markdown,.txt"
+                        @change="uploadFullDoc($event.target.files[0], 'master_strategy')">
+                    <label for="master-strategy-file" class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                        </svg>
+                        Upload .md
+                    </label>
+                </div>
+            </div>
+
+            <!-- Platform Strategies -->
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <h3 class="text-sm font-medium text-gray-900 mb-3">Platform Strategies (Optional)</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <template x-for="platform in ['instagram', 'facebook', 'gbp', 'linkedin', 'tiktok']" :key="platform">
+                        <div class="border rounded-lg p-3" :class="platformStrategies[platform] ? 'border-green-300 bg-green-50' : 'border-gray-200'">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-medium text-gray-900 capitalize" x-text="platform === 'gbp' ? 'GBP' : platform"></span>
+                                <span x-show="platformStrategies[platform]" class="text-xs text-green-600">✓</span>
+                            </div>
+                            <input type="file" :id="'platform-' + platform" class="hidden" accept=".md,.markdown,.txt"
+                                @change="uploadPlatformStrategy($event.target.files[0], platform)">
+                            <label :for="'platform-' + platform" class="inline-flex items-center px-2 py-1 border border-gray-300 rounded text-xs font-medium text-gray-600 bg-white hover:bg-gray-50 cursor-pointer">
+                                Upload
+                            </label>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Upload Status Messages -->
+            <div x-show="fullDocMessage" class="mt-4 p-3 rounded-lg text-sm"
+                :class="fullDocError ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'">
+                <span x-text="fullDocMessage"></span>
+            </div>
+        </div>
+
+        <!-- Original Strategy Files Upload (for extraction) -->
         <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-2">Upload Strategy Documents</h2>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">Upload Strategy Documents (Auto-Extract)</h2>
             <p class="text-sm text-gray-500 mb-6">
-                Upload any documents containing your client's brand strategy, voice guidelines, target audience info, etc.
-                We'll automatically extract and organize the information.
+                Upload PDF, DOC, or other documents. We'll automatically extract and organize key information into fields.
             </p>
 
             <!-- File Upload Area -->
@@ -365,6 +442,13 @@ function onboardingWizard() {
             {% endfor %}
         ],
         lastExtraction: null,
+        
+        // Full document upload state
+        profileUploaded: false,
+        masterStrategyUploaded: false,
+        platformStrategies: {},
+        fullDocMessage: '',
+        fullDocError: false,
 
         handleDrop(e) {
             this.dragOver = false;
@@ -426,6 +510,75 @@ function onboardingWizard() {
                 }
             } catch (error) {
                 console.error('Failed to delete file:', error);
+            }
+        },
+
+        // Upload full markdown documents (profile, master strategy)
+        async uploadFullDoc(file, docType) {
+            if (!file) return;
+            
+            this.fullDocMessage = '';
+            this.fullDocError = false;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('doc_type', docType);
+
+            try {
+                const response = await fetch('/clients/{{ client.id }}/profile/upload-file', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (docType === 'profile') {
+                        this.profileUploaded = true;
+                    } else if (docType === 'master_strategy') {
+                        this.masterStrategyUploaded = true;
+                    }
+                    this.fullDocMessage = `${file.name} uploaded successfully (${Math.round(data.content_length / 1024)}KB)`;
+                    this.fullDocError = false;
+                } else {
+                    this.fullDocMessage = data.error || 'Upload failed';
+                    this.fullDocError = true;
+                }
+            } catch (error) {
+                this.fullDocMessage = 'Upload failed: ' + error.message;
+                this.fullDocError = true;
+            }
+        },
+
+        // Upload platform-specific strategy
+        async uploadPlatformStrategy(file, platform) {
+            if (!file) return;
+            
+            this.fullDocMessage = '';
+            this.fullDocError = false;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`/clients/{{ client.id }}/strategies/${platform}/upload-file`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.platformStrategies[platform] = true;
+                    this.fullDocMessage = `${platform.charAt(0).toUpperCase() + platform.slice(1)} strategy uploaded (${Math.round(data.content_length / 1024)}KB)`;
+                    this.fullDocError = false;
+                } else {
+                    this.fullDocMessage = data.error || 'Upload failed';
+                    this.fullDocError = true;
+                }
+            } catch (error) {
+                this.fullDocMessage = 'Upload failed: ' + error.message;
+                this.fullDocError = true;
             }
         }
     }

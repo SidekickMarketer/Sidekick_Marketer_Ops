@@ -5,63 +5,80 @@
 {% block body %}
 {% include "components/nav.html" %}
 
-<main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-    <div class="md:flex md:items-center md:justify-between mb-8">
+<main class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Clients</h1>
-            <p class="mt-1 text-sm text-gray-500">Manage your agency clients</p>
+            <h1 class="font-display text-3xl font-semibold text-ink-900">Clients</h1>
+            <p class="mt-2 text-ink-500">Manage your agency clients and their content strategies.</p>
         </div>
-        <div class="mt-4 md:mt-0">
-            <a href="/clients/new" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
-                + New Client
-            </a>
-        </div>
+        <a href="/clients/new" class="inline-flex items-center px-4 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 btn-lift">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            New Client
+        </a>
     </div>
 
     {% if clients %}
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platforms</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Posts</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metricool</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+    <div class="bg-white rounded-xl border border-cream-300 overflow-hidden">
+        <table class="min-w-full">
+            <thead>
+                <tr class="border-b border-cream-200 bg-cream-50">
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-ink-600 uppercase tracking-wider">Client</th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-ink-600 uppercase tracking-wider">Platforms</th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-ink-600 uppercase tracking-wider">Posts</th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-ink-600 uppercase tracking-wider">Status</th>
+                    <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-ink-600 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="divide-y divide-cream-200">
                 {% for client in clients %}
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <a href="/clients/{{ client.id }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-900">
+                <tr class="hover:bg-cream-50 transition-colors">
+                    <td class="px-6 py-4">
+                        <a href="/clients/{{ client.id }}" class="font-medium text-ink-900 hover:text-emerald-700 transition-colors">
                             {{ client.name }}
                         </a>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex space-x-1">
+                    <td class="px-6 py-4">
+                        <div class="flex flex-wrap gap-1">
                             {% if client.strategy and client.strategy.platforms %}
-                                {% for platform in client.strategy.platforms %}
-                                <span class="px-2 py-0.5 text-xs rounded bg-gray-100">{{ platform }}</span>
+                                {% for platform in client.strategy.platforms[:3] %}
+                                <span class="px-2 py-0.5 text-xs font-medium rounded bg-cream-100 text-ink-600 capitalize">{{ platform }}</span>
                                 {% endfor %}
+                                {% if client.strategy.platforms|length > 3 %}
+                                <span class="px-2 py-0.5 text-xs font-medium rounded bg-cream-100 text-ink-500">+{{ client.strategy.platforms|length - 3 }}</span>
+                                {% endif %}
                             {% else %}
-                            <span class="text-sm text-gray-400">Not set</span>
+                            <span class="text-sm text-ink-400 italic">Not set</span>
                             {% endif %}
                         </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {{ client.posts|length }}
+                    <td class="px-6 py-4">
+                        <span class="text-sm text-ink-600">{{ client.posts|length }}</span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    <td class="px-6 py-4">
                         {% if client.metricool_blog_id %}
-                        <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Linked</span>
+                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5"></span>
+                            Linked
+                        </span>
                         {% else %}
-                        <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">Not linked</span>
+                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-cream-100 text-ink-500">
+                            <span class="w-1.5 h-1.5 bg-ink-400 rounded-full mr-1.5"></span>
+                            Not linked
+                        </span>
                         {% endif %}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <a href="/clients/{{ client.id }}/generate" class="text-indigo-600 hover:text-indigo-900 mr-3">Generate</a>
-                        <a href="/clients/{{ client.id }}/strategy" class="text-gray-600 hover:text-gray-900">Strategy</a>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex items-center justify-end space-x-3">
+                            <a href="/clients/{{ client.id }}/generate" class="text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
+                                Generate
+                            </a>
+                            <a href="/clients/{{ client.id }}" class="text-sm font-medium text-ink-500 hover:text-ink-700 transition-colors">
+                                Manage
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -69,14 +86,20 @@
         </table>
     </div>
     {% else %}
-    <div class="text-center py-12 bg-white rounded-lg shadow">
-        <h3 class="text-sm font-medium text-gray-900">No clients yet</h3>
-        <p class="mt-1 text-sm text-gray-500">Get started by adding your first client.</p>
-        <div class="mt-6">
-            <a href="/clients/new" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
-                + New Client
-            </a>
+    <div class="bg-white rounded-xl border border-cream-300 p-12 text-center">
+        <div class="w-16 h-16 bg-cream-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
         </div>
+        <h3 class="font-display text-lg font-semibold text-ink-900 mb-2">No clients yet</h3>
+        <p class="text-ink-500 mb-6 max-w-sm mx-auto">Get started by adding your first client. You'll be generating amazing captions in no time.</p>
+        <a href="/clients/new" class="inline-flex items-center px-5 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 btn-lift">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add Your First Client
+        </a>
     </div>
     {% endif %}
 </main>

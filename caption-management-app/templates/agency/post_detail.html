@@ -5,40 +5,52 @@
 {% block body %}
 {% include "components/nav.html" %}
 
-<main class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8" x-data="{ showScheduleModal: false }">
+<main class="max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8" x-data="{ showScheduleModal: false }">
+    <!-- Header -->
     <div class="mb-8">
-        <div class="flex items-center space-x-3">
-            <a href="/clients/{{ post.client.id }}" class="text-gray-400 hover:text-gray-600">&larr;</a>
-            <h1 class="text-2xl font-bold text-gray-900">Edit Post</h1>
+        <div class="flex items-center space-x-3 mb-2">
+            <a href="/clients/{{ post.client.id }}" class="text-ink-400 hover:text-ink-600 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <h1 class="font-display text-2xl font-semibold text-ink-900">Edit Post</h1>
         </div>
-        <p class="mt-1 text-sm text-gray-500">{{ post.client.name }} &middot; {{ post.batch_name or 'No batch' }}</p>
+        <p class="text-ink-500">{{ post.client.name }} · {{ post.batch_name or 'No batch' }}</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Main Content -->
         <div class="lg:col-span-2">
-            <form method="POST" action="/posts/{{ post.id }}" class="bg-white shadow rounded-lg p-6">
+            <form method="POST" action="/posts/{{ post.id }}" class="bg-white rounded-xl border border-cream-300 p-6">
                 <div class="space-y-6">
                     <!-- Caption -->
                     <div>
-                        <label for="caption" class="block text-sm font-medium text-gray-700 mb-2">Caption</label>
+                        <label for="caption" class="block text-sm font-semibold text-ink-900 mb-2">Caption</label>
                         <textarea name="caption" id="caption" rows="6"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">{{ post.caption }}</textarea>
-                        <p class="mt-1 text-xs text-gray-500"><span id="char-count">{{ post.caption|length }}</span> characters</p>
+                            class="w-full px-4 py-3 border border-cream-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none">{{ post.caption }}</textarea>
+                        <div class="mt-2 flex items-center justify-between">
+                            <p class="text-xs text-ink-500"><span id="char-count">{{ post.caption|length }}</span> characters</p>
+                            {% if post.was_edited %}
+                            <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-md border border-emerald-200">
+                                ✨ System is learning from your edits
+                            </span>
+                            {% endif %}
+                        </div>
                     </div>
 
                     <!-- Hashtags -->
                     <div>
-                        <label for="hashtags" class="block text-sm font-medium text-gray-700 mb-2">Hashtags</label>
+                        <label for="hashtags" class="block text-sm font-semibold text-ink-900 mb-2">Hashtags</label>
                         <textarea name="hashtags" id="hashtags" rows="2"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">{{ post.hashtags }}</textarea>
+                            class="w-full px-4 py-3 border border-cream-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none font-mono text-sm">{{ post.hashtags }}</textarea>
                     </div>
 
                     <!-- Platform -->
                     <div>
-                        <label for="platform" class="block text-sm font-medium text-gray-700 mb-2">Platform</label>
+                        <label for="platform" class="block text-sm font-semibold text-ink-900 mb-2">Platform</label>
                         <select name="platform" id="platform"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            class="w-full px-4 py-3 border border-cream-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors bg-white">
                             <option value="instagram" {{ 'selected' if post.platform == 'instagram' else '' }}>Instagram</option>
                             <option value="facebook" {{ 'selected' if post.platform == 'facebook' else '' }}>Facebook</option>
                             <option value="linkedin" {{ 'selected' if post.platform == 'linkedin' else '' }}>LinkedIn</option>
@@ -50,44 +62,49 @@
 
                     <!-- Scheduled Date -->
                     <div>
-                        <label for="scheduled_date" class="block text-sm font-medium text-gray-700 mb-2">Scheduled Date</label>
+                        <label for="scheduled_date" class="block text-sm font-semibold text-ink-900 mb-2">Scheduled Date</label>
                         <input type="datetime-local" name="scheduled_date" id="scheduled_date"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            class="w-full px-4 py-3 border border-cream-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                             value="{{ post.scheduled_date.strftime('%Y-%m-%dT%H:%M') if post.scheduled_date else '' }}">
                     </div>
 
                     <!-- Photo Selection -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Photo</label>
+                        <label class="block text-sm font-semibold text-ink-900 mb-2">Photo</label>
                         {% if photos %}
-                        <div class="grid grid-cols-4 gap-2">
-                            <label class="relative cursor-pointer">
+                        <div class="grid grid-cols-5 gap-2">
+                            <label class="relative cursor-pointer group">
                                 <input type="radio" name="photo_id" value="" class="sr-only peer" {{ 'checked' if not post.photo_id else '' }}>
-                                <div class="w-full h-16 bg-gray-100 rounded-lg flex items-center justify-center peer-checked:ring-2 peer-checked:ring-indigo-500">
-                                    <span class="text-xs text-gray-400">None</span>
+                                <div class="w-full aspect-square bg-cream-100 rounded-lg flex items-center justify-center peer-checked:ring-2 peer-checked:ring-emerald-500 group-hover:bg-cream-200 transition-colors">
+                                    <span class="text-xs text-ink-400 font-medium">None</span>
                                 </div>
                             </label>
-                            {% for photo in photos %}
-                            <label class="relative cursor-pointer">
+                            {% for photo in photos[:9] %}
+                            <label class="relative cursor-pointer group">
                                 <input type="radio" name="photo_id" value="{{ photo.id }}" class="sr-only peer" {{ 'checked' if post.photo_id == photo.id else '' }}>
-                                <img src="{{ photo.file_path }}" class="w-full h-16 object-cover rounded-lg peer-checked:ring-2 peer-checked:ring-indigo-500" alt="">
+                                <img src="{{ photo.file_path }}" class="w-full aspect-square object-cover rounded-lg peer-checked:ring-2 peer-checked:ring-emerald-500 group-hover:opacity-80 transition-all" alt="">
                             </label>
                             {% endfor %}
                         </div>
+                        {% if photos|length > 9 %}
+                        <p class="mt-2 text-xs text-ink-500">Showing 9 of {{ photos|length }} photos. <a href="/clients/{{ post.client.id }}/photos" class="text-emerald-600 hover:text-emerald-700">View all</a></p>
+                        {% endif %}
                         {% else %}
-                        <p class="text-sm text-gray-500">No photos uploaded. <a href="/clients/{{ post.client.id }}/photos" class="text-indigo-600 hover:text-indigo-900">Upload photos</a></p>
+                        <div class="p-4 bg-cream-50 rounded-lg text-center">
+                            <p class="text-sm text-ink-500">No photos uploaded. <a href="/clients/{{ post.client.id }}/photos" class="text-emerald-600 hover:text-emerald-700 font-medium">Upload photos</a></p>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
 
                 <!-- Actions -->
-                <div class="mt-8 flex justify-between">
-                    <button type="button" onclick="deletePost()" class="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-900">
+                <div class="mt-8 pt-6 border-t border-cream-200 flex items-center justify-between">
+                    <button type="button" onclick="deletePost()" class="text-sm font-medium text-red-600 hover:text-red-700 transition-colors">
                         Delete Post
                     </button>
-                    <div class="flex space-x-3">
-                        <a href="/clients/{{ post.client.id }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">Cancel</a>
-                        <button type="submit" class="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700">
+                    <div class="flex items-center space-x-3">
+                        <a href="/clients/{{ post.client.id }}" class="px-4 py-2 text-sm font-medium text-ink-500 hover:text-ink-700 transition-colors">Cancel</a>
+                        <button type="submit" class="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition-colors btn-lift">
                             Save Changes
                         </button>
                     </div>
@@ -98,37 +115,37 @@
         <!-- Sidebar -->
         <div class="space-y-6">
             <!-- Status -->
-            <div class="bg-white shadow rounded-lg p-6">
-                <h3 class="text-sm font-semibold text-gray-900 mb-4">Status</h3>
+            <div class="bg-white rounded-xl border border-cream-300 p-6">
+                <h3 class="text-sm font-semibold text-ink-900 mb-4">Status</h3>
 
                 <div class="mb-4">
                     {% if post.status == 'draft' %}
-                    <span class="px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-600">Draft</span>
+                    <span class="px-3 py-1.5 text-sm font-medium rounded-lg bg-cream-100 text-ink-600">Draft</span>
                     {% elif post.status == 'internal_review' %}
-                    <span class="px-3 py-1 text-sm rounded-full bg-purple-100 text-purple-800">Internal Review</span>
+                    <span class="px-3 py-1.5 text-sm font-medium rounded-lg bg-purple-50 text-purple-700 border border-purple-200">Internal Review</span>
                     {% elif post.status == 'client_review' %}
-                    <span class="px-3 py-1 text-sm rounded-full bg-yellow-100 text-yellow-800">Client Review</span>
+                    <span class="px-3 py-1.5 text-sm font-medium rounded-lg bg-amber-50 text-amber-700 border border-amber-200">Client Review</span>
                     {% elif post.status == 'revision_requested' %}
-                    <span class="px-3 py-1 text-sm rounded-full bg-red-100 text-red-800">Changes Requested</span>
+                    <span class="px-3 py-1.5 text-sm font-medium rounded-lg bg-red-50 text-red-700 border border-red-200">Changes Requested</span>
                     {% elif post.status == 'approved' %}
-                    <span class="px-3 py-1 text-sm rounded-full bg-green-100 text-green-800">Approved</span>
+                    <span class="px-3 py-1.5 text-sm font-medium rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">Approved</span>
                     {% elif post.status == 'scheduled' %}
-                    <span class="px-3 py-1 text-sm rounded-full bg-blue-100 text-blue-800">Scheduled</span>
+                    <span class="px-3 py-1.5 text-sm font-medium rounded-lg bg-blue-50 text-blue-700 border border-blue-200">Scheduled</span>
                     {% endif %}
                 </div>
 
                 <!-- Status Actions -->
                 <div class="space-y-2">
                     {% if post.status == 'draft' %}
-                    <button onclick="updateStatus('client_review')" class="w-full px-4 py-2 text-sm font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700">
+                    <button onclick="updateStatus('client_review')" class="w-full px-4 py-2.5 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors">
                         Send for Client Review
                     </button>
                     {% elif post.status == 'revision_requested' %}
-                    <button onclick="updateStatus('client_review')" class="w-full px-4 py-2 text-sm font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700">
+                    <button onclick="updateStatus('client_review')" class="w-full px-4 py-2.5 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors">
                         Re-send for Review
                     </button>
                     {% elif post.status == 'approved' %}
-                    <button onclick="scheduleToMetricool()" class="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                    <button onclick="scheduleToMetricool()" class="w-full px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
                         Push to Metricool
                     </button>
                     {% endif %}
@@ -137,24 +154,38 @@
 
             <!-- Client Feedback -->
             {% if post.client_comment %}
-            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div class="bg-red-50 border border-red-200 rounded-xl p-5">
                 <h3 class="text-sm font-semibold text-red-800 mb-2">Client Feedback</h3>
                 <p class="text-sm text-red-700">{{ post.client_comment }}</p>
             </div>
             {% endif %}
 
+            <!-- Original vs Current (Learning Indicator) -->
+            {% if post.original_caption and post.was_edited %}
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-5">
+                <h3 class="text-sm font-semibold text-emerald-800 mb-2">✨ Learning from your edits</h3>
+                <p class="text-xs text-emerald-700 mb-3">The AI will use this refinement pattern for future captions.</p>
+                <details class="text-xs">
+                    <summary class="cursor-pointer text-emerald-600 font-medium hover:text-emerald-700">View original caption</summary>
+                    <div class="mt-2 p-2 bg-white rounded-lg border border-emerald-200">
+                        <p class="text-ink-600 whitespace-pre-line">{{ post.original_caption[:300] }}{% if post.original_caption|length > 300 %}...{% endif %}</p>
+                    </div>
+                </details>
+            </div>
+            {% endif %}
+
             <!-- Comments -->
             {% if post.comments %}
-            <div class="bg-white shadow rounded-lg p-6">
-                <h3 class="text-sm font-semibold text-gray-900 mb-4">Comments</h3>
+            <div class="bg-white rounded-xl border border-cream-300 p-6">
+                <h3 class="text-sm font-semibold text-ink-900 mb-4">Comments</h3>
                 <div class="space-y-3">
                     {% for comment in post.comments %}
                     <div class="text-sm">
                         <div class="flex items-center space-x-2">
-                            <span class="font-medium text-gray-900">{{ comment.author_name }}</span>
-                            <span class="text-xs text-gray-400">{{ comment.created_at.strftime('%b %d') }}</span>
+                            <span class="font-medium text-ink-900">{{ comment.author_name }}</span>
+                            <span class="text-xs text-ink-400">{{ comment.created_at.strftime('%b %d') }}</span>
                         </div>
-                        <p class="mt-1 text-gray-600">{{ comment.content }}</p>
+                        <p class="mt-1 text-ink-600">{{ comment.content }}</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -163,11 +194,11 @@
 
             <!-- Preview -->
             {% if post.photo %}
-            <div class="bg-white shadow rounded-lg p-6">
-                <h3 class="text-sm font-semibold text-gray-900 mb-4">Preview</h3>
-                <div class="border rounded-lg overflow-hidden">
+            <div class="bg-white rounded-xl border border-cream-300 p-6">
+                <h3 class="text-sm font-semibold text-ink-900 mb-4">Preview</h3>
+                <div class="border border-cream-200 rounded-lg overflow-hidden">
                     <img src="{{ post.photo.file_path }}" class="w-full" alt="">
-                    <div class="p-3 text-sm text-gray-700 whitespace-pre-line">{{ post.caption[:100] }}{% if post.caption|length > 100 %}...{% endif %}</div>
+                    <div class="p-3 text-sm text-ink-700 whitespace-pre-line">{{ post.caption[:100] }}{% if post.caption|length > 100 %}...{% endif %}</div>
                 </div>
             </div>
             {% endif %}
