@@ -10,7 +10,7 @@ import shutil
 from pathlib import Path
 
 from .database import engine, get_db, Base
-from .models import Client, Strategy, Post, PreviousPost, Photo, Comment, Batch, PostStatus
+from .models import Client, Strategy, Post, PreviousPost, Photo, Comment, Batch, PostStatus, ProfileAudit, AUDIT_CHECKLISTS
 from .services import caption_generator, metricool
 
 # Create tables
@@ -599,6 +599,148 @@ async def import_previous_posts(
     db.commit()
 
     return JSONResponse({"success": True, "imported": count})
+
+
+# ============================================================================
+# PROFILE AUDITS
+# ============================================================================
+
+@app.get("/clients/{client_id}/audits", response_class=HTMLResponse)
+async def view_audits(request: Request, client_id: int, db: Session = Depends(get_db)):
+    """View all profile audits for a client"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    # Get existing audits
+    audits = db.query(ProfileAudit).filter(ProfileAudit.client_id == client_id).all()
+    audits_by_platform = {a.platform: a for a in audits}
+
+    # Get platforms from client strategy, or default to common ones
+    platforms = []
+    if client.strategy and client.strategy.platforms:
+        platforms = client.strategy.platforms
+    else:
+        platforms = ["facebook", "instagram", "gbp"]
+
+    # Build audit summary for each platform
+    audit_summary = []
+    for platform in platforms:
+        if platform in AUDIT_CHECKLISTS:
+            existing = audits_by_platform.get(platform)
+            audit_summary.append({
+                "platform": platform,
+                "name": AUDIT_CHECKLISTS[platform]["name"],
+                "score": existing.score if existing else 0,
+                "last_audited": existing.last_audited_at if existing else None,
+                "total_items": len(AUDIT_CHECKLISTS[platform]["items"]),
+                "critical_items": len([i for i in AUDIT_CHECKLISTS[platform]["items"] if i["critical"]])
+            })
+
+    return templates.TemplateResponse("agency/audits.html", {
+        "request": request,
+        "client": client,
+        "audit_summary": audit_summary,
+        "available_platforms": list(AUDIT_CHECKLISTS.keys())
+    })
+
+
+@app.get("/clients/{client_id}/audits/{platform}", response_class=HTMLResponse)
+async def edit_audit(request: Request, client_id: int, platform: str, db: Session = Depends(get_db)):
+    """Edit a specific platform audit"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    if platform not in AUDIT_CHECKLISTS:
+        raise HTTPException(status_code=404, detail="Invalid platform")
+
+    # Get or create audit
+    audit = db.query(ProfileAudit).filter(
+        ProfileAudit.client_id == client_id,
+        ProfileAudit.platform == platform
+    ).first()
+
+    checklist_data = audit.checklist_data if audit else {}
+
+    # Build checklist with current state
+    checklist = AUDIT_CHECKLISTS[platform]
+    items_with_state = []
+    for item in checklist["items"]:
+        item_data = checklist_data.get(item["key"], {})
+        items_with_state.append({
+            **item,
+            "checked": item_data.get("checked", False),
+            "notes": item_data.get("notes", "")
+        })
+
+    return templates.TemplateResponse("agency/audit_detail.html", {
+        "request": request,
+        "client": client,
+        "platform": platform,
+        "platform_name": checklist["name"],
+        "items": items_with_state,
+        "score": audit.score if audit else 0,
+        "last_audited": audit.last_audited_at if audit else None
+    })
+
+
+@app.post("/clients/{client_id}/audits/{platform}")
+async def save_audit(
+    request: Request,
+    client_id: int,
+    platform: str,
+    db: Session = Depends(get_db)
+):
+    """Save audit checklist"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    if platform not in AUDIT_CHECKLISTS:
+        raise HTTPException(status_code=404, detail="Invalid platform")
+
+    form_data = await request.form()
+
+    # Get or create audit
+    audit = db.query(ProfileAudit).filter(
+        ProfileAudit.client_id == client_id,
+        ProfileAudit.platform == platform
+    ).first()
+
+    if not audit:
+        audit = ProfileAudit(client_id=client_id, platform=platform)
+        db.add(audit)
+
+    # Process form data
+    checklist_data = {}
+    checklist = AUDIT_CHECKLISTS[platform]
+
+    checked_count = 0
+    for item in checklist["items"]:
+        key = item["key"]
+        is_checked = form_data.get(f"check_{key}") == "on"
+        notes = form_data.get(f"notes_{key}", "")
+
+        checklist_data[key] = {
+            "checked": is_checked,
+            "notes": notes
+        }
+
+        if is_checked:
+            checked_count += 1
+
+    # Calculate score
+    total_items = len(checklist["items"])
+    score = int((checked_count / total_items) * 100) if total_items > 0 else 0
+
+    audit.checklist_data = checklist_data
+    audit.score = score
+    audit.last_audited_at = datetime.utcnow()
+
+    db.commit()
+
+    return RedirectResponse(f"/clients/{client_id}/audits", status_code=303)
 
 
 if __name__ == "__main__":
