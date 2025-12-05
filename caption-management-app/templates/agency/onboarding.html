@@ -72,7 +72,7 @@
                 @drop.prevent="handleDrop($event)"
                 :class="{ 'border-indigo-400 bg-indigo-50': dragOver }">
 
-                <input type="file" id="strategy-file" class="hidden" accept=".pdf,.doc,.docx,.txt"
+                <input type="file" id="strategy-file" class="hidden" accept=".pdf,.doc,.docx,.txt,.md,.markdown"
                     @change="uploadFile($event.target.files[0])">
 
                 <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
@@ -85,7 +85,7 @@
                         <span class="text-gray-500"> or drag and drop</span>
                     </label>
                 </div>
-                <p class="mt-1 text-xs text-gray-500">PDF, DOC, DOCX, or TXT up to 10MB</p>
+                <p class="mt-1 text-xs text-gray-500">PDF, DOC, DOCX, TXT, or Markdown up to 10MB</p>
             </div>
 
             <!-- Upload Progress -->

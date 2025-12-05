@@ -1,7 +1,7 @@
 """
 Strategy Document Parser
 
-Parses uploaded strategy files (PDF, DOCX, TXT) and extracts key information
+Parses uploaded strategy files (PDF, DOCX, TXT, Markdown) and extracts key information
 using Claude to intelligently structure the content into strategy fields.
 """
 
@@ -16,7 +16,7 @@ def extract_text_from_file(file_content: bytes, filename: str) -> str:
     """Extract text content from various file types"""
     extension = filename.lower().split('.')[-1]
 
-    if extension == 'txt':
+    if extension in ['txt', 'md', 'markdown']:
         return file_content.decode('utf-8', errors='ignore')
 
     elif extension == 'pdf':
