@@ -10,8 +10,8 @@ import shutil
 from pathlib import Path
 
 from .database import engine, get_db, Base
-from .models import Client, Strategy, Post, PreviousPost, Photo, Comment, Batch, PostStatus, ProfileAudit, AUDIT_CHECKLISTS
-from .services import caption_generator, metricool
+from .models import Client, Strategy, Post, PreviousPost, Photo, Comment, Batch, PostStatus, ProfileAudit, AUDIT_CHECKLISTS, StrategyFile, OnboardingStatus
+from .services import caption_generator, metricool, strategy_parser
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -83,7 +83,9 @@ async def create_client(
     client = Client(
         name=name,
         slug=slug,
-        review_token=review_token
+        review_token=review_token,
+        onboarding_status=OnboardingStatus.IN_PROGRESS,
+        onboarding_step=1
     )
     db.add(client)
     db.commit()
@@ -94,7 +96,8 @@ async def create_client(
     db.add(strategy)
     db.commit()
 
-    return RedirectResponse(f"/clients/{client.id}", status_code=303)
+    # Redirect to onboarding wizard
+    return RedirectResponse(f"/clients/{client.id}/onboarding", status_code=303)
 
 
 @app.get("/clients/{client_id}", response_class=HTMLResponse)
@@ -741,6 +744,262 @@ async def save_audit(
     db.commit()
 
     return RedirectResponse(f"/clients/{client_id}/audits", status_code=303)
+
+
+# ============================================================================
+# CLIENT ONBOARDING
+# ============================================================================
+
+STRATEGY_UPLOAD_DIR = BASE_DIR / "static" / "uploads" / "strategies"
+STRATEGY_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+
+@app.get("/clients/{client_id}/onboarding", response_class=HTMLResponse)
+async def onboarding_wizard(request: Request, client_id: int, db: Session = Depends(get_db)):
+    """Client onboarding wizard - upload strategy files"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    # Get any previously uploaded strategy files
+    strategy_files = db.query(StrategyFile).filter(StrategyFile.client_id == client_id).all()
+
+    # Get extracted strategy data from session or strategy
+    extracted_data = {}
+    if client.strategy:
+        extracted_data = {
+            "brand_voice": client.strategy.brand_voice,
+            "tone_keywords": client.strategy.tone_keywords or [],
+            "content_pillars": client.strategy.content_pillars or [],
+            "target_audience": client.strategy.target_audience,
+            "audience_pain_points": client.strategy.audience_pain_points or [],
+            "industry": client.strategy.industry,
+            "unique_selling_points": client.strategy.unique_selling_points or [],
+            "key_messages": client.strategy.key_messages or [],
+            "topics_to_avoid": client.strategy.topics_to_avoid or [],
+            "hashtag_sets": client.strategy.hashtag_sets or {},
+            "platforms": client.strategy.platforms or [],
+        }
+
+    return templates.TemplateResponse("agency/onboarding.html", {
+        "request": request,
+        "client": client,
+        "strategy_files": strategy_files,
+        "extracted_data": extracted_data,
+        "step": client.onboarding_step or 1
+    })
+
+
+@app.post("/clients/{client_id}/onboarding/upload-strategy")
+async def upload_strategy_file(
+    client_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """Upload and parse a strategy document"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    # Create client strategy folder
+    client_folder = STRATEGY_UPLOAD_DIR / client.slug
+    client_folder.mkdir(exist_ok=True)
+
+    # Save file
+    ext = Path(file.filename).suffix.lower()
+    filename = f"{secrets.token_hex(8)}{ext}"
+    file_path = client_folder / filename
+
+    content = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(content)
+
+    # Parse the document
+    extracted = strategy_parser.parse_strategy_document(content, file.filename, client.name)
+
+    # Save strategy file record
+    strategy_file = StrategyFile(
+        client_id=client_id,
+        filename=filename,
+        original_filename=file.filename,
+        file_path=f"/static/uploads/strategies/{client.slug}/{filename}",
+        file_type=ext.replace(".", ""),
+        extracted_summary=extracted.get("summary", ""),
+        processed=True
+    )
+    db.add(strategy_file)
+
+    # Update strategy with extracted data
+    if client.strategy and "error" not in extracted:
+        strategy = client.strategy
+
+        # Merge extracted data with existing (don't overwrite existing values)
+        if extracted.get("brand_voice") and not strategy.brand_voice:
+            strategy.brand_voice = extracted["brand_voice"]
+
+        if extracted.get("tone_keywords"):
+            existing = strategy.tone_keywords or []
+            strategy.tone_keywords = list(dict.fromkeys(existing + extracted["tone_keywords"]))
+
+        if extracted.get("content_pillars"):
+            existing = strategy.content_pillars or []
+            strategy.content_pillars = list(dict.fromkeys(existing + extracted["content_pillars"]))
+
+        if extracted.get("target_audience") and not strategy.target_audience:
+            strategy.target_audience = extracted["target_audience"]
+
+        if extracted.get("audience_pain_points"):
+            existing = strategy.audience_pain_points or []
+            strategy.audience_pain_points = list(dict.fromkeys(existing + extracted["audience_pain_points"]))
+
+        if extracted.get("industry") and extracted["industry"] != "default" and not strategy.industry:
+            strategy.industry = extracted["industry"]
+
+        if extracted.get("unique_selling_points"):
+            existing = strategy.unique_selling_points or []
+            strategy.unique_selling_points = list(dict.fromkeys(existing + extracted["unique_selling_points"]))
+
+        if extracted.get("key_messages"):
+            existing = strategy.key_messages or []
+            strategy.key_messages = list(dict.fromkeys(existing + extracted["key_messages"]))
+
+        if extracted.get("topics_to_avoid"):
+            existing = strategy.topics_to_avoid or []
+            strategy.topics_to_avoid = list(dict.fromkeys(existing + extracted["topics_to_avoid"]))
+
+        if extracted.get("platforms"):
+            existing = strategy.platforms or []
+            strategy.platforms = list(dict.fromkeys(existing + extracted["platforms"]))
+
+        # Handle hashtags
+        if extracted.get("hashtags_primary") or extracted.get("hashtags_secondary"):
+            existing_sets = strategy.hashtag_sets or {"primary": [], "secondary": []}
+            if extracted.get("hashtags_primary"):
+                existing_sets["primary"] = list(dict.fromkeys(
+                    existing_sets.get("primary", []) + extracted["hashtags_primary"]
+                ))
+            if extracted.get("hashtags_secondary"):
+                existing_sets["secondary"] = list(dict.fromkeys(
+                    existing_sets.get("secondary", []) + extracted["hashtags_secondary"]
+                ))
+            strategy.hashtag_sets = existing_sets
+
+        if extracted.get("additional_notes"):
+            if strategy.additional_notes:
+                strategy.additional_notes += "\n\n" + extracted["additional_notes"]
+            else:
+                strategy.additional_notes = extracted["additional_notes"]
+
+    db.commit()
+
+    return JSONResponse({
+        "success": True,
+        "file_id": strategy_file.id,
+        "filename": file.filename,
+        "extracted": extracted
+    })
+
+
+@app.post("/clients/{client_id}/onboarding/save-strategy")
+async def save_onboarding_strategy(
+    request: Request,
+    client_id: int,
+    db: Session = Depends(get_db)
+):
+    """Save strategy during onboarding"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    form_data = await request.form()
+
+    strategy = client.strategy
+    if not strategy:
+        strategy = Strategy(client_id=client_id)
+        db.add(strategy)
+
+    # Update strategy fields
+    strategy.brand_voice = form_data.get("brand_voice", "")
+    strategy.tone_keywords = [k.strip() for k in form_data.get("tone_keywords", "").split(",") if k.strip()]
+    strategy.content_pillars = [p.strip() for p in form_data.get("content_pillars", "").split(",") if p.strip()]
+    strategy.target_audience = form_data.get("target_audience", "")
+    strategy.audience_pain_points = [p.strip() for p in form_data.get("audience_pain_points", "").split(",") if p.strip()]
+    strategy.platforms = [p.strip() for p in form_data.getlist("platforms")]
+    strategy.industry = form_data.get("industry", "")
+    strategy.unique_selling_points = [u.strip() for u in form_data.get("unique_selling_points", "").split(",") if u.strip()]
+    strategy.key_messages = [m.strip() for m in form_data.get("key_messages", "").split("\n") if m.strip()]
+    strategy.topics_to_avoid = [t.strip() for t in form_data.get("topics_to_avoid", "").split(",") if t.strip()]
+    strategy.additional_notes = form_data.get("additional_notes", "")
+
+    # Parse hashtag sets
+    primary_hashtags = [h.strip().replace("#", "") for h in form_data.get("primary_hashtags", "").split(",") if h.strip()]
+    secondary_hashtags = [h.strip().replace("#", "") for h in form_data.get("secondary_hashtags", "").split(",") if h.strip()]
+    strategy.hashtag_sets = {"primary": primary_hashtags, "secondary": secondary_hashtags}
+
+    # Update onboarding step
+    client.onboarding_step = 2
+
+    db.commit()
+
+    return RedirectResponse(f"/clients/{client_id}/onboarding", status_code=303)
+
+
+@app.post("/clients/{client_id}/onboarding/complete")
+async def complete_onboarding(
+    client_id: int,
+    db: Session = Depends(get_db)
+):
+    """Mark onboarding as complete"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    client.onboarding_status = OnboardingStatus.COMPLETED
+    db.commit()
+
+    return RedirectResponse(f"/clients/{client_id}", status_code=303)
+
+
+@app.post("/clients/{client_id}/onboarding/skip")
+async def skip_onboarding(
+    client_id: int,
+    db: Session = Depends(get_db)
+):
+    """Skip onboarding and go directly to client page"""
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+
+    client.onboarding_status = OnboardingStatus.COMPLETED
+    db.commit()
+
+    return RedirectResponse(f"/clients/{client_id}", status_code=303)
+
+
+@app.delete("/clients/{client_id}/onboarding/files/{file_id}")
+async def delete_strategy_file(
+    client_id: int,
+    file_id: int,
+    db: Session = Depends(get_db)
+):
+    """Delete an uploaded strategy file"""
+    strategy_file = db.query(StrategyFile).filter(
+        StrategyFile.id == file_id,
+        StrategyFile.client_id == client_id
+    ).first()
+
+    if not strategy_file:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    # Delete physical file
+    file_path = BASE_DIR / strategy_file.file_path.lstrip("/")
+    if file_path.exists():
+        file_path.unlink()
+
+    db.delete(strategy_file)
+    db.commit()
+
+    return JSONResponse({"success": True})
 
 
 if __name__ == "__main__":

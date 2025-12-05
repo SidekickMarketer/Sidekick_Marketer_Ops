@@ -26,6 +26,12 @@ class Platform(str, enum.Enum):
     GBP = "gbp"  # Google Business Profile
 
 
+class OnboardingStatus(str, enum.Enum):
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+
+
 class Client(Base):
     __tablename__ = "clients"
 
@@ -36,6 +42,10 @@ class Client(Base):
 
     # Metricool integration
     metricool_blog_id = Column(String(50), nullable=True)
+
+    # Onboarding tracking
+    onboarding_status = Column(String(50), default=OnboardingStatus.NOT_STARTED)
+    onboarding_step = Column(Integer, default=1)  # Current step in onboarding
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -48,6 +58,7 @@ class Client(Base):
     previous_posts = relationship("PreviousPost", back_populates="client", cascade="all, delete-orphan")
     photos = relationship("Photo", back_populates="client", cascade="all, delete-orphan")
     profile_audits = relationship("ProfileAudit", back_populates="client", cascade="all, delete-orphan")
+    strategy_files = relationship("StrategyFile", back_populates="client", cascade="all, delete-orphan")
 
 
 class Strategy(Base):
@@ -223,6 +234,31 @@ class ProfileAudit(Base):
 
     # Relationship
     client = relationship("Client", back_populates="profile_audits")
+
+
+class StrategyFile(Base):
+    """Uploaded strategy documents for reference"""
+    __tablename__ = "strategy_files"
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey("clients.id"))
+
+    filename = Column(String(255))
+    original_filename = Column(String(255))
+    file_path = Column(String(500))
+    file_type = Column(String(50))  # pdf, docx, txt, etc.
+
+    # Extracted content summary
+    extracted_summary = Column(Text, nullable=True)
+
+    # Whether this file was processed
+    processed = Column(Boolean, default=False)
+
+    # Timestamps
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationship
+    client = relationship("Client", back_populates="strategy_files")
 
 
 # Define the audit checklists for each platform

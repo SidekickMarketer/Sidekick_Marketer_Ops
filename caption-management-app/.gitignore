@@ -31,3 +31,4 @@ Thumbs.db
 # Uploads (handled separately)
 static/uploads/*
 !static/uploads/.gitkeep
+!static/uploads/**/.gitkeep
